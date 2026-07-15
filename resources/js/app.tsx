@@ -6,7 +6,20 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+// Prefer the store name the admin actually manages (shared on every page as
+// general_settings). VITE_APP_NAME is baked in at build time, so it cannot
+// follow that setting — it is only a fallback for when props are unavailable.
+const storeNameFromProps = (): string | null => {
+    try {
+        const page = document.getElementById('app')?.dataset.page;
+
+        return page ? (JSON.parse(page).props?.general_settings?.store_name ?? null) : null;
+    } catch {
+        return null;
+    }
+};
+
+const appName = storeNameFromProps() || import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
