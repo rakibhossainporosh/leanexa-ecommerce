@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Truck, Package, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useCurrency } from '@/hooks/use-currency';
 
 type Order = {
     order_number: string;
@@ -14,6 +15,7 @@ type Order = {
 };
 
 export default function TrackOrder({ order, error, searched }: { order?: Order, error?: string, searched?: boolean }) {
+    const { formatPrice } = useCurrency();
     const { data, setData, get, processing } = useForm({
         order_number: order?.order_number || '',
     });
@@ -80,7 +82,7 @@ export default function TrackOrder({ order, error, searched }: { order?: Order, 
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div>
                                             <p className="text-muted-foreground mb-1">Total Amount</p>
-                                            <p className="font-semibold text-foreground">${order.total_amount}</p>
+                                            <p className="font-semibold text-foreground">{formatPrice(order.total_amount)}</p>
                                         </div>
                                         <div>
                                             <p className="text-muted-foreground mb-1">Payment Status</p>

@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import CustomerLayout from '@/layouts/customer-layout';
 import { Badge } from '@/components/ui/badge';
 import { Package, Heart, Settings, LogOut, ChevronRight, User } from 'lucide-react';
+import { useCurrency } from '@/hooks/use-currency';
 
 type Order = { id: number; order_number: string; status: string; total_amount: string | number; created_at: string };
 
@@ -14,6 +15,7 @@ export default function AccountIndex({
 }) {
     const { auth } = usePage().props as any;
     const user = auth?.user;
+    const { formatPrice } = useCurrency();
 
     const links = [
         { label: 'My Orders', description: 'Track and review your purchases', href: '/orders', icon: Package },
@@ -97,7 +99,7 @@ export default function AccountIndex({
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <Badge variant={o.status === 'completed' ? 'default' : 'secondary'}>{o.status}</Badge>
-                                                <span className="text-sm font-semibold">${o.total_amount}</span>
+                                                <span className="text-sm font-semibold">{formatPrice(o.total_amount)}</span>
                                             </div>
                                         </div>
                                     ))}
