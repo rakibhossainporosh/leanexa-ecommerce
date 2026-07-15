@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -17,6 +18,7 @@ class UserController extends Controller
         $search = trim((string) $request->input('search', ''));
 
         $users = User::query()
+            ->with('roles:id,name')
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('name', 'like', "%{$search}%")
@@ -30,11 +32,13 @@ class UserController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'role' => $user->roles->first()?->name,
                 'created_at' => $user->created_at?->toISOString(),
             ]);
 
         return Inertia::render('admin/users/index', [
             'users' => $users,
+            'roles' => Role::where('guard_name', 'admin')->orderBy('name')->pluck('name'),
             'filters' => ['search' => $search],
         ]);
     }
@@ -45,6 +49,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
+            'role' => ['required', 'string', Rule::exists('roles', 'name')->where('guard_name', 'admin')],
         ]);
 
         $user = User::create([
@@ -57,6 +62,8 @@ class UserController extends Controller
         // (email_verified_at is intentionally not in the model's $fillable).
         $user->forceFill(['email_verified_at' => now()])->save();
 
+        $user->syncRoles([$validated['role']]);
+
         return back()->with('success', 'Admin user created successfully.');
     }
 
@@ -66,7 +73,15 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', Password::defaults()],
+            'role' => ['required', 'string', Rule::exists('roles', 'name')->where('guard_name', 'admin')],
         ]);
+
+        // Never let the only Admin drop their own role — it would lock everyone
+        // out of the admin panel with no way back in.
+        $isDemotingAnAdmin = $user->hasRole('Admin') && $validated['role'] !== 'Admin';
+        if ($isDemotingAnAdmin && User::role('Admin')->count() <= 1) {
+            return back()->with('error', 'You cannot demote the last remaining admin.');
+        }
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
@@ -74,6 +89,8 @@ class UserController extends Controller
             $user->password = Hash::make($validated['password']);
         }
         $user->save();
+
+        $user->syncRoles([$validated['role']]);
 
         return back()->with('success', 'Admin user updated successfully.');
     }

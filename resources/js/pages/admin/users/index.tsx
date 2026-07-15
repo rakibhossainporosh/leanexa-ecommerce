@@ -9,25 +9,30 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useState } from 'react';
 import { Plus, Trash2, Pencil, ShieldCheck, Search } from 'lucide-react';
 
-type UserRow = { id: number; name: string; email: string; created_at: string | null };
+type UserRow = { id: number; name: string; email: string; role: string | null; created_at: string | null };
 type Paginated<T> = { data: T[]; links: { url: string | null; label: string; active: boolean }[] };
 
 export default function UsersIndex({
     users,
+    roles,
     filters,
 }: {
     users: Paginated<UserRow>;
+    roles: string[];
     filters: { search: string };
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const [editing, setEditing] = useState<UserRow | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
 
+    const defaultRole = roles.includes('Admin') ? 'Admin' : (roles[0] ?? '');
+
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        role: defaultRole,
     });
 
     const openCreate = () => {
@@ -39,7 +44,7 @@ export default function UsersIndex({
 
     const openEdit = (u: UserRow) => {
         setEditing(u);
-        setData({ name: u.name, email: u.email, password: '', password_confirmation: '' });
+        setData({ name: u.name, email: u.email, password: '', password_confirmation: '', role: u.role ?? defaultRole });
         clearErrors();
         setIsOpen(true);
     };
@@ -95,6 +100,20 @@ export default function UsersIndex({
                                 {errors.email && <p className="text-destructive text-sm">{errors.email}</p>}
                             </div>
                             <div className="space-y-2">
+                                <Label htmlFor="role">Role</Label>
+                                <select
+                                    id="role"
+                                    value={data.role}
+                                    onChange={(e) => setData('role', e.target.value)}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                >
+                                    {roles.map((r) => (
+                                        <option key={r} value={r}>{r}</option>
+                                    ))}
+                                </select>
+                                {errors.role && <p className="text-destructive text-sm">{errors.role}</p>}
+                            </div>
+                            <div className="space-y-2">
                                 <Label htmlFor="password">{editing ? 'New Password (optional)' : 'Password'}</Label>
                                 <Input id="password" type="password" autoComplete="new-password" value={data.password} onChange={(e) => setData('password', e.target.value)} />
                                 {errors.password && <p className="text-destructive text-sm">{errors.password}</p>}
@@ -129,6 +148,7 @@ export default function UsersIndex({
                             <TableRow>
                                 <TableHead className="pl-6">Name</TableHead>
                                 <TableHead>Email</TableHead>
+                                <TableHead>Role</TableHead>
                                 <TableHead>Joined</TableHead>
                                 <TableHead className="pr-6 text-right">Actions</TableHead>
                             </TableRow>
@@ -148,6 +168,13 @@ export default function UsersIndex({
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                                    <TableCell>
+                                        {u.role ? (
+                                            <span className="bg-muted rounded-md px-2 py-1 text-xs font-medium">{u.role}</span>
+                                        ) : (
+                                            <span className="text-muted-foreground text-xs">No role</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell className="text-muted-foreground text-xs">
                                         {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
                                     </TableCell>
