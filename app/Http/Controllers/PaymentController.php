@@ -45,11 +45,14 @@ class PaymentController extends Controller
 
     private function completeOrder(?string $tranId, array $validation)
     {
-        $order = DB::transaction(function () use ($tranId, $validation) {
+        // Lock the order row so the browser callback and the IPN can never both
+        // mark it paid — and so only one of them owns sending the invoice.
+        $outcome = DB::transaction(function () use ($tranId, $validation) {
             $order = Order::with('items')->where('order_number', $tranId)->lockForUpdate()->first();
 
             if (! $order || $order->status !== 'pending') {
-                return $order; // Unknown or already processed — idempotent no-op.
+                // Unknown, or the other callback already completed it.
+                return ['order' => $order, 'just_paid' => false];
             }
 
             if (! $this->amountMatches($validation, $order->total_amount, $order->currency)) {
@@ -72,11 +75,19 @@ class PaymentController extends Controller
                 $order->update(['coupon_applied' => true]);
             }
 
-            return $order;
+            return ['order' => $order, 'just_paid' => true];
         });
 
+        $order = $outcome['order'];
+
         if ($order && $order->payment_status === 'paid') {
-            $this->sendOrderInvoice($order);
+            // SSLCommerz calls both success_url (browser) and ipn_url (server),
+            // so this method runs twice per order. Only the call that actually
+            // flipped it to paid sends the invoice; otherwise the customer gets
+            // two identical emails with the same PDF.
+            if ($outcome['just_paid']) {
+                $this->sendOrderInvoice($order);
+            }
 
             // Restore viewable session since cross-site POST drops the original session cookie
             $viewable = request()->session()->get('viewable_orders', []);
