@@ -1,0 +1,118 @@
+name: deploy
+
+# Only ever deploys after the "tests" workflow has gone green on main, so a
+# broken commit cannot reach production. workflow_dispatch allows a manual
+# re-deploy of the current main from the Actions tab.
+on:
+  workflow_run:
+    workflows: ['tests']
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Skip unless the test run actually passed (or a human triggered this).
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the commit that passed tests
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          persist-credentials: false
+
+      # Matches the PHP the hosting runs (8.3.31), so vendor/ is built against
+      # the same version that will execute it.
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install PHP dependencies (production)
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-progress
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      # The hosting has no Node, so assets must be compiled here and shipped.
+      - name: Build assets
+        run: npm run build
+
+      - name: Verify the build produced assets
+        run: test -d public/build || { echo "public/build missing - refusing to deploy"; exit 1; }
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # --delete keeps the server identical to the repo, but every --exclude is
+      # also protected from deletion:
+      #   .env    - lives only on the server, holds the real credentials
+      #   storage - customer uploads, logs and sessions must survive deploys
+      #   bootstrap/cache - regenerated below by the artisan cache commands
+      - name: Upload application
+        run: |
+          rsync -rlptzv --delete \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key" \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='.env' \
+            --exclude='storage' \
+            --exclude='bootstrap/cache' \
+            --exclude='tests' \
+            --exclude='.editorconfig' \
+            --exclude='.gitattributes' \
+            --exclude='.gitignore' \
+            ./ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/leanexa/"
+
+      - name: Migrate and refresh caches
+        run: |
+          ssh -p "${{ secrets.SSH_PORT }}" -i ~/.ssh/deploy_key \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -se <<'REMOTE'
+            set -euo pipefail
+            cd ~/leanexa
+
+            # Serve a maintenance page while the schema changes.
+            php artisan down --render="errors::503" --retry=15 || true
+
+            php artisan migrate --force --no-interaction
+
+            # public/storage is a symlink created on the server; rsync --delete
+            # removes it each run, so recreate it every deploy.
+            php artisan storage:link || true
+
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            php artisan up
+            echo "--- deployed: $(php artisan --version) ---"
+          REMOTE
+
+      - name: Always lift maintenance mode, even if the deploy failed
+        if: failure()
+        run: |
+          ssh -p "${{ secrets.SSH_PORT }}" -i ~/.ssh/deploy_key \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" 'cd ~/leanexa && php artisan up' || true
