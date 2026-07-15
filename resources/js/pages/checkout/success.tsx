@@ -2,8 +2,11 @@ import { Head, Link } from '@inertiajs/react';
 import CustomerLayout from '@/layouts/customer-layout';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2 } from 'lucide-react';
+import { useCurrency } from '@/hooks/use-currency';
 
 export default function CheckoutSuccess({ order }: { order: any }) {
+    const { formatPrice } = useCurrency();
+
     return (
         <CustomerLayout>
             <Head title="Order Successful" />
@@ -22,13 +25,13 @@ export default function CheckoutSuccess({ order }: { order: any }) {
                         {order.items.map((item: any) => (
                             <div key={item.id} className="flex justify-between">
                                 <span>{item.quantity}x {item.product_name}</span>
-                                <span>${(item.price * item.quantity).toFixed(2)}</span>
+                                <span>{formatPrice(item.price * item.quantity)}</span>
                             </div>
                         ))}
                     </div>
                     <div className="border-t mt-4 pt-4 flex justify-between font-bold text-lg">
                         <span>Total</span>
-                        <span>${order.total_amount}</span>
+                        <span>{formatPrice(order.total_amount)}</span>
                     </div>
                     <div className="border-t mt-4 pt-4 flex justify-between font-bold text-md text-muted-foreground">
                         <span>Payment Status</span>
