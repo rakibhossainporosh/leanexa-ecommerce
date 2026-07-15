@@ -11,9 +11,10 @@ import SettingsLayout from '@/layouts/settings/layout';
 // follow that setting — it is only a fallback for when props are unavailable.
 const storeNameFromProps = (): string | null => {
     try {
-        const page = document.getElementById('app')?.dataset.page;
+        // Inertia ships the page payload as <script data-page="app" type="application/json">.
+        const payload = document.querySelector('script[data-page]')?.textContent;
 
-        return page ? (JSON.parse(page).props?.general_settings?.store_name ?? null) : null;
+        return payload ? (JSON.parse(payload).props?.general_settings?.store_name ?? null) : null;
     } catch {
         return null;
     }
