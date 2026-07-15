@@ -92,7 +92,7 @@ class AppServiceProvider extends ServiceProvider
                 config([
                     'mail.default' => 'hostinger',
                     'mail.from.address' => $settings['official_smtp_email'],
-                    'mail.from.name' => 'orders @leanexa.store',
+                    'mail.from.name' => $settings['store_name'] ?? config('app.name'),
                 ]);
             } else if (!empty($settings['smtp_email'])) {
                 config([
