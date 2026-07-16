@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,11 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useState } from 'react';
+import { useCurrency } from '@/hooks/use-currency';
 import { DollarSign, ShoppingBag, FileText, Search } from 'lucide-react';
 
 export default function SalesReportIndex({ summary, recent_transactions, filters }: { summary: any; recent_transactions: any[]; filters: any }) {
-    const { activeCurrency } = usePage().props as any;
-    const currencySymbol = activeCurrency?.symbol || '৳';
+    // The controller reports every figure in the default currency, so formatPrice
+    // converts them into whichever currency is selected — prefixing a symbol
+    // without converting showed BDT figures labelled as dollars.
+    const { formatPrice } = useCurrency();
 
     const [startDate, setStartDate] = useState(filters.start_date || '');
     const [endDate, setEndDate] = useState(filters.end_date || '');
@@ -61,7 +64,7 @@ export default function SalesReportIndex({ summary, recent_transactions, filters
                         <DollarSign className="h-5 w-5 opacity-80" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold">{currencySymbol}{parseFloat(summary.total_revenue).toFixed(2)}</div>
+                        <div className="text-3xl font-bold">{formatPrice(summary.total_revenue)}</div>
                         <p className="mt-1 text-xs opacity-80">From orders &amp; invoices</p>
                     </CardContent>
                 </Card>
@@ -113,7 +116,7 @@ export default function SalesReportIndex({ summary, recent_transactions, filters
                                     </TableCell>
                                     <TableCell>{tx.customer}</TableCell>
                                     <TableCell className="text-muted-foreground">{new Date(tx.date).toLocaleString()}</TableCell>
-                                    <TableCell className="pr-6 text-right font-bold">{currencySymbol}{parseFloat(tx.amount).toFixed(2)}</TableCell>
+                                    <TableCell className="pr-6 text-right font-bold">{formatPrice(tx.amount)}</TableCell>
                                 </TableRow>
                             ))}
                             {recent_transactions.length === 0 && (
