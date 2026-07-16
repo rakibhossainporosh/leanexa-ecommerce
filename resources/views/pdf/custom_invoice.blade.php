@@ -262,11 +262,17 @@
                             <td class="amount-due-label">Total</td>
                             <td class="amount-due-value">{{ formatPricePDF($invoice->amount, $currencySymbol) }}</td>
                         </tr>
-                        
-                        @if($invoice->payable_amount && $invoice->payable_amount !== $invoice->amount)
+
+                        {{-- Show how much has been paid and what remains once any
+                             payment has landed (partially or fully paid). --}}
+                        @if($invoice->amount_paid > 0)
                         <tr>
-                            <td class="total-label" style="font-weight: bold; color: #0f172a; padding-top: 15px;">Due Amount</td>
-                            <td class="total-value" style="font-weight: bold; color: #0f172a; padding-top: 15px;">{{ formatPricePDF($invoice->payable_amount, $currencySymbol) }}</td>
+                            <td class="total-label" style="color: #059669; padding-top: 12px;">Amount Paid</td>
+                            <td class="total-value" style="color: #059669; padding-top: 12px;">- {{ formatPricePDF($invoice->amount_paid, $currencySymbol) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="total-label" style="font-weight: bold; color: #0f172a;">Amount Due</td>
+                            <td class="total-value" style="font-weight: bold; color: #0f172a;">{{ formatPricePDF($invoice->due_amount, $currencySymbol) }}</td>
                         </tr>
                         @endif
                     </table>
