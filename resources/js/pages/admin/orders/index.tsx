@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Eye,
     List,
@@ -10,6 +10,7 @@ import {
     ChevronUp,
     ChevronDown,
     Loader2,
+    Trash2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -116,10 +117,28 @@ export default function OrdersIndex() {
         setPerPage,
         order,
         toggleSort,
+        reload,
         lastPage,
         from,
         to,
     } = useDataTable('/admin/orders-data', DT_COLUMNS);
+
+    const remove = (row: any) => {
+        const paidWarning = row.payment_status === 'paid'
+            ? '\n\nThis order is PAID — deleting it removes its revenue from the Sales Report.'
+            : '';
+
+        if (!confirm(`Delete order #${row.order_number}?${paidWarning}\n\nThis cannot be undone.`)) {
+            return;
+        }
+
+        router.delete(`/admin/orders/${row.id}`, {
+            preserveScroll: true,
+            // The table feeds itself from /admin/orders-data rather than Inertia
+            // props, so it has to be told to refetch.
+            onSuccess: () => reload(),
+        });
+    };
 
     return (
         <AdminLayout title="Orders">
@@ -302,6 +321,15 @@ export default function OrdersIndex() {
                                                 >
                                                     <FileText className="h-4 w-4" />
                                                 </a>
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                title="Delete Order"
+                                                className="text-destructive hover:text-destructive"
+                                                onClick={() => remove(order)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </div>
                                     </TableCell>

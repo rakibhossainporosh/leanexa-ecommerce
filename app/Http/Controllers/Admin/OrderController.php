@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -65,5 +66,30 @@ class OrderController extends Controller
 
         return Pdf::loadView('pdf.invoice', ['order' => $order])
             ->stream('invoice_' . $order->order_number . '.pdf');
+    }
+
+    public function destroy(Order $order)
+    {
+        DB::transaction(function () use ($order) {
+            // The coupon's use was committed when payment landed. Deleting the
+            // order must hand that use back, or a limited-use coupon stays
+            // consumed by an order that no longer exists.
+            if ($order->coupon_id && $order->coupon_applied) {
+                $coupon = $order->coupon()->first();
+
+                if ($coupon && $coupon->uses > 0) {
+                    $coupon->decrement('uses');
+                }
+            }
+
+            // The admin bell links straight to /admin/orders/{id}, so leaving
+            // these behind would produce notifications that 404 when clicked.
+            DB::table('notifications')->where('data->order_id', $order->id)->delete();
+
+            // order_items go with it via the cascadeOnDelete foreign key.
+            $order->delete();
+        });
+
+        return back()->with('success', 'Order deleted successfully.');
     }
 }
