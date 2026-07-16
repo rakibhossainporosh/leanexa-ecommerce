@@ -151,9 +151,7 @@
             <p>Hi {{ $order->customer->name ?? 'Customer' }},</p>
             <p>Thank you for your purchase! We're getting your order ready to be shipped. We will notify you when it has been sent.</p>
             
-            {{-- Signed so the recipient can open it straight from the email,
-                 without the checkout session that normally authorises access. --}}
-            <a href="{{ \Illuminate\Support\Facades\URL::signedRoute('checkout.success', ['order_number' => $order->order_number]) }}" class="btn">View your order</a>
+            <a href="{{ route('checkout.success', $order->order_number) }}" class="btn">View your order</a>
             
             <div class="order-summary">
                 <h3>Order summary</h3>

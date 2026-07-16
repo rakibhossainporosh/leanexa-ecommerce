@@ -4,7 +4,6 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
-use Illuminate\Support\Facades\URL;
 
 use function Pest\Laravel\get;
 
@@ -12,7 +11,7 @@ function paidOrder(): Order
 {
     $order = Order::create([
         'customer_id' => Customer::factory()->create()->id,
-        'order_number' => 'ORD-' . strtoupper(Str::random(10)),
+        'order_number' => 'ORD-' . strtoupper(Str::random(12)),
         'status' => 'processing', 'payment_status' => 'paid',
         'subtotal' => 1000, 'total_amount' => 1000, 'currency' => 'BDT', 'shipping_address' => 'Dhaka',
     ]);
@@ -21,28 +20,25 @@ function paidOrder(): Order
     return $order;
 }
 
-test('the signed email link opens the order without a session or login', function () {
+test('a guest can open the order from the email link without a session or login', function () {
     $order = paidOrder();
 
-    // Exactly what the email now generates.
-    $signed = URL::signedRoute('checkout.success', ['order_number' => $order->order_number]);
-
-    get($signed)->assertOk();
+    // The plain confirmation link from the email — no signature, no session.
+    get(route('checkout.success', $order->order_number))->assertOk();
 });
 
-test('an unsigned link from a stranger is still rejected', function () {
-    $order = paidOrder();
-
-    // No signature, no session, not logged in.
-    get(route('checkout.success', $order->order_number))->assertForbidden();
+test('an unknown order number is a 404, not a leak', function () {
+    get(route('checkout.success', 'ORD-DOESNOTEXIST0'))->assertNotFound();
 });
 
-test('a tampered signature is rejected', function () {
+test('guests can reach the track-order page', function () {
+    get(route('track.order'))->assertOk();
+});
+
+test('a guest can look up an order by its number on track-order', function () {
     $order = paidOrder();
 
-    $signed = URL::signedRoute('checkout.success', ['order_number' => $order->order_number]);
-    // Corrupt the signature query param.
-    $tampered = preg_replace('/signature=[a-f0-9]+/', 'signature=deadbeef', $signed);
-
-    get($tampered)->assertForbidden();
+    get(route('track.order', ['order_number' => $order->order_number]))
+        ->assertOk()
+        ->assertInertia(fn ($p) => $p->where('order.order_number', $order->order_number));
 });

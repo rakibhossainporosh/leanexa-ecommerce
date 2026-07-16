@@ -346,12 +346,20 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         ) : (
-                            <Link href="/login" className="hidden items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:text-shop sm:flex">
-                                <User className="h-5 w-5" />
-                                <span className="hidden xl:flex xl:flex-col xl:leading-tight">
-                                    <span className="font-semibold">Sign in</span>
-                                </span>
-                            </Link>
+                            <>
+                                <Link href="/track-order" className="hidden items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:text-shop sm:flex">
+                                    <Truck className="h-5 w-5" />
+                                    <span className="hidden xl:flex xl:flex-col xl:leading-tight">
+                                        <span className="font-semibold">Track Order</span>
+                                    </span>
+                                </Link>
+                                <Link href="/login" className="hidden items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:text-shop sm:flex">
+                                    <User className="h-5 w-5" />
+                                    <span className="hidden xl:flex xl:flex-col xl:leading-tight">
+                                        <span className="font-semibold">Sign in</span>
+                                    </span>
+                                </Link>
+                            </>
                         )}
                         <Link href="/wishlist" className="relative hidden p-2 text-muted-foreground hover:text-shop sm:block" aria-label="Wishlist">
                             <span className="relative">
@@ -563,13 +571,22 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                                     </Link>
                                 </>
                             ) : (
-                                <Link
-                                    href="/login"
-                                    onClick={() => setMobileOpen(false)}
-                                    className="mx-3 flex items-center justify-center gap-2 rounded-lg bg-shop-primary py-2.5 text-sm font-semibold text-white transition-colors hover:bg-shop-primary-hover"
-                                >
-                                    <User className="h-4 w-4" /> Sign in
-                                </Link>
+                                <>
+                                    <Link
+                                        href="/track-order"
+                                        onClick={() => setMobileOpen(false)}
+                                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-shop-primary/5 hover:text-shop"
+                                    >
+                                        <Truck className="h-4 w-4" /> Track Order
+                                    </Link>
+                                    <Link
+                                        href="/login"
+                                        onClick={() => setMobileOpen(false)}
+                                        className="mx-3 mt-1 flex items-center justify-center gap-2 rounded-lg bg-shop-primary py-2.5 text-sm font-semibold text-white transition-colors hover:bg-shop-primary-hover"
+                                    >
+                                        <User className="h-4 w-4" /> Sign in
+                                    </Link>
+                                </>
                             )}
                         </div>
                     </div>

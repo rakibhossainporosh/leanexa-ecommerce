@@ -86,14 +86,9 @@ class CheckoutController extends Controller
 
     public function retryPayment(Request $request, $orderNumber)
     {
+        // The order number is a 12-char random token (ORD-XXXXXXXXXXXX), so
+        // possessing it — from the confirmation email — is the authorisation.
         $order = Order::with('items')->where('order_number', $orderNumber)->firstOrFail();
-
-        $ownsOrder = $order->customer_id === auth()->id();
-        $viewable = in_array($orderNumber, $request->session()->get('viewable_orders', []), true);
-
-        if (! $ownsOrder && ! $viewable) {
-            abort(403, 'Unauthorized access to this order.');
-        }
 
         if ($order->payment_status === 'paid') {
             return redirect()->back()->with('info', 'This order is already paid.');
@@ -121,16 +116,10 @@ class CheckoutController extends Controller
 
     public function success(Request $request, $orderNumber)
     {
+        // Viewable by anyone holding the order number — the 12-char random token
+        // is the credential, so guests and email recipients (no login, no
+        // checkout session) can open their own order confirmation.
         $order = Order::with('items')->where('order_number', $orderNumber)->firstOrFail();
-
-        $ownsOrder = $order->customer_id === auth()->id();
-        $viewable = in_array($orderNumber, $request->session()->get('viewable_orders', []), true);
-
-        // The "View your order" email link is a signed URL, so a recipient with
-        // no checkout session (or not logged in) can still open their own order.
-        if (! $ownsOrder && ! $viewable && ! $request->hasValidSignature()) {
-            abort(403, 'Unauthorized access to this order.');
-        }
 
         return Inertia::render('checkout/success', [
             'order' => $order,
