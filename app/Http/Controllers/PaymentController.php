@@ -109,8 +109,15 @@ class PaymentController extends Controller
         $outcome = DB::transaction(function () use ($tranId, $validation) {
             $payment = \App\Models\CustomInvoicePayment::where('transaction_id', $tranId)->lockForUpdate()->first();
 
-            if (! $payment || $payment->status !== 'pending') {
-                return ['payment' => $payment, 'result' => 'invalid'];
+            if (! $payment) {
+                return ['payment' => null, 'result' => 'not_found'];
+            }
+
+            // SSLCommerz calls both the browser success_url and the server IPN,
+            // so this runs twice. If the other callback already settled it, treat
+            // this as done — not an error the paying customer should ever see.
+            if ($payment->status !== 'pending') {
+                return ['payment' => $payment, 'result' => 'already_done'];
             }
 
             if (! $this->amountMatches($validation, $payment->amount, $payment->invoice->currency_code)) {
@@ -131,7 +138,7 @@ class PaymentController extends Controller
 
         $payment = $outcome['payment'];
 
-        if ($outcome['result'] === 'invalid' || ! $payment) {
+        if ($outcome['result'] === 'not_found' || ! $payment) {
             return redirect()->route('home')->with('error', 'Invalid Invoice Transaction');
         }
 
@@ -139,12 +146,16 @@ class PaymentController extends Controller
             return redirect()->route('invoice.show', $payment->invoice->uuid)->with('error', 'Payment verification failed.');
         }
 
-        $invoice = $payment->invoice()->first();
-        if ($invoice->status === 'paid') {
-            $this->sendInvoiceReceipt($invoice);
+        // Only the callback that actually settled the payment sends the receipt;
+        // the second (already_done) one just confirms success to the customer.
+        if ($outcome['result'] === 'paid') {
+            $invoice = $payment->invoice()->first();
+            if ($invoice->status === 'paid') {
+                $this->sendInvoiceReceipt($invoice);
+            }
         }
 
-        return redirect()->route('invoice.show', $invoice->uuid)->with('success', 'Payment Successful!');
+        return redirect()->route('invoice.show', $payment->invoice->uuid)->with('success', 'Payment Successful!');
     }
 
     /**
