@@ -4,7 +4,7 @@
 @section('preheader', $currency . ' ' . number_format($amount, 2) . ' received from ' . $customerName)
 
 @section('content')
-    <h2>💰 New payment received</h2>
+    <h2>💰 New payment received — {{ $reference }}</h2>
     <p>A payment has just been completed on your store. Here are the details:</p>
 
     <div class="panel">
@@ -14,7 +14,7 @@
                 <td class="value">{{ $type }}</td>
             </tr>
             <tr>
-                <td class="label">Reference</td>
+                <td class="label">{{ $type === 'Order' ? 'Order No' : 'Invoice No' }}</td>
                 <td class="value">{{ $reference }}</td>
             </tr>
             <tr>
