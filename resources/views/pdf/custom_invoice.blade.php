@@ -127,7 +127,10 @@
         
         $currencyObj = \App\Models\Currency::where('code', $invoice->currency_code)->first();
         $currencySymbol = $currencyObj ? $currencyObj->symbol : 'Tk';
-        
+        // DomPDF's built-in fonts can't render the Bengali Taka sign (৳) and show
+        // "?" instead, so fall back to the ASCII "Tk" the order invoice PDF uses.
+        $currencySymbol = str_replace('৳', 'Tk', $currencySymbol);
+
         function formatPricePDF($amount, $symbol) {
             return $symbol . ' ' . number_format($amount, 2);
         }
