@@ -87,6 +87,13 @@ class PaymentController extends Controller
             // two identical emails with the same PDF.
             if ($outcome['just_paid']) {
                 $this->sendOrderInvoice($order);
+                $this->notifyAdmins(
+                    'Order',
+                    $order->order_number,
+                    (float) $order->total_amount,
+                    $order->currency ?: 'BDT',
+                    $order->customer?->name ?? 'Guest',
+                );
             }
 
             // Restore viewable session since cross-site POST drops the original session cookie
@@ -146,13 +153,22 @@ class PaymentController extends Controller
             return redirect()->route('invoice.show', $payment->invoice->uuid)->with('error', 'Payment verification failed.');
         }
 
-        // Only the callback that actually settled the payment sends the receipt;
-        // the second (already_done) one just confirms success to the customer.
+        // Only the callback that actually settled the payment sends mail; the
+        // second (already_done) one just confirms success to the customer.
         if ($outcome['result'] === 'paid') {
             $invoice = $payment->invoice()->first();
-            if ($invoice->status === 'paid') {
-                $this->sendInvoiceReceipt($invoice);
-            }
+
+            // The customer is emailed on every settlement — partial or full.
+            $this->sendInvoiceReceipt($invoice, $payment);
+
+            $this->notifyAdmins(
+                'Custom Invoice',
+                '#' . str_pad((string) $invoice->id, 5, '0', STR_PAD_LEFT),
+                (float) $payment->amount,
+                $invoice->currency_code ?: 'BDT',
+                $invoice->customer_name,
+                $invoice->status === 'paid' ? 'Paid in full' : 'Partial payment',
+            );
         }
 
         return redirect()->route('invoice.show', $payment->invoice->uuid)->with('success', 'Payment Successful!');
@@ -322,17 +338,53 @@ class PaymentController extends Controller
         }
     }
 
-    private function sendInvoiceReceipt(CustomInvoice $invoice): void
+    private function sendInvoiceReceipt(CustomInvoice $invoice, ?\App\Models\CustomInvoicePayment $payment = null): void
     {
         try {
             $pdfPath = $this->renderPdf('pdf.custom_invoice', ['invoice' => $invoice], 'custom_invoice_' . $invoice->uuid . '.pdf');
 
-            Mail::send('emails.custom_invoice', ['invoice' => $invoice], function ($m) use ($invoice, $pdfPath) {
-                $m->to($invoice->customer_email)->subject('Your Custom Invoice Receipt');
+            $paidNow = $payment ? (float) $payment->amount : (float) $invoice->amount;
+            $isFullyPaid = $invoice->status === 'paid';
+            $subject = $isFullyPaid ? 'Payment Received — Invoice Paid in Full' : 'Partial Payment Received';
+
+            Mail::send('emails.custom_invoice', [
+                'invoice' => $invoice,
+                'paidNow' => $paidNow,
+                'isFullyPaid' => $isFullyPaid,
+            ], function ($m) use ($invoice, $pdfPath, $subject) {
+                $m->to($invoice->customer_email)->subject($subject);
                 $m->attach($pdfPath);
             });
         } catch (\Throwable $e) {
             Log::error('Failed to send invoice receipt: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Copy every configured admin address on any completed payment, whether it
+     * came from a storefront order or a custom invoice, partial or full.
+     */
+    private function notifyAdmins(string $type, string $reference, float $amount, string $currency, string $customerName, string $note = ''): void
+    {
+        $recipients = \App\Models\Setting::adminNotificationEmails();
+
+        if (empty($recipients)) {
+            return;
+        }
+
+        try {
+            Mail::send('emails.admin_payment_notification', [
+                'type' => $type,
+                'reference' => $reference,
+                'amount' => $amount,
+                'currency' => $currency,
+                'customerName' => $customerName,
+                'note' => $note,
+            ], function ($m) use ($recipients, $type) {
+                $m->to($recipients)->subject('New Payment Received — ' . $type);
+            });
+        } catch (\Throwable $e) {
+            Log::error('Failed to send admin payment notification: ' . $e->getMessage());
         }
     }
 

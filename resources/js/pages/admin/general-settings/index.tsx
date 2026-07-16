@@ -35,6 +35,7 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
         official_smtp_email: settings.official_smtp_email || '',
         official_smtp_password: settings.official_smtp_password || '',
         primary_mailer: settings.primary_mailer || 'gmail',
+        admin_notification_emails: settings.admin_notification_emails || '',
         abandoned_cart_enabled: settings.abandoned_cart_enabled ?? false,
         abandoned_cart_timeout_hours: settings.abandoned_cart_timeout_hours || 24,
         abandoned_cart_discount_type: settings.abandoned_cart_discount_type || 'none',
@@ -397,6 +398,22 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
                                 <ToggleGroupItem value="hostinger" className="px-6">Hostinger</ToggleGroupItem>
                             </ToggleGroup>
                             {errors.primary_mailer && <p className="text-destructive text-sm">{errors.primary_mailer}</p>}
+                        </div>
+
+                        <div className="space-y-2 border-t pt-6">
+                            <Label htmlFor="admin_notification_emails">Admin Notification Emails</Label>
+                            <p className="text-muted-foreground text-xs">
+                                These addresses are copied on every payment — from both storefront orders and custom invoices.
+                                Enter one email per line, or separate them with commas.
+                            </p>
+                            <Textarea
+                                id="admin_notification_emails"
+                                value={data.admin_notification_emails}
+                                onChange={(e) => setData('admin_notification_emails', e.target.value)}
+                                rows={3}
+                                placeholder={'owner@store.com\naccounts@store.com'}
+                            />
+                            {errors.admin_notification_emails && <p className="text-destructive text-sm">{errors.admin_notification_emails}</p>}
                         </div>
                     </CardContent>
                 </Card>

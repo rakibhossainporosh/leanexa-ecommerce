@@ -131,8 +131,12 @@
         // "?" instead, so fall back to the ASCII "Tk" the order invoice PDF uses.
         $currencySymbol = str_replace('৳', 'Tk', $currencySymbol);
 
-        function formatPricePDF($amount, $symbol) {
-            return $symbol . ' ' . number_format($amount, 2);
+        // Guarded so rendering this template twice in one request (e.g. emailing
+        // then previewing) doesn't fatally redeclare the function.
+        if (! function_exists('formatPricePDF')) {
+            function formatPricePDF($amount, $symbol) {
+                return $symbol . ' ' . number_format($amount, 2);
+            }
         }
     ?>
     

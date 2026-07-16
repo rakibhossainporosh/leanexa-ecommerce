@@ -43,6 +43,7 @@ class GeneralSettingController extends Controller
             'official_smtp_email' => 'nullable|email|max:255',
             'official_smtp_password' => 'nullable|string|max:255',
             'primary_mailer' => 'nullable|string|in:gmail,hostinger',
+            'admin_notification_emails' => 'nullable|string|max:2000',
             'abandoned_cart_enabled' => 'boolean',
             'abandoned_cart_timeout_hours' => 'required|integer|min:0',
             'abandoned_cart_discount_type' => 'required|string|in:none,percentage,fixed',

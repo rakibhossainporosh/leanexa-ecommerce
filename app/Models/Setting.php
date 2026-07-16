@@ -109,6 +109,7 @@ class Setting extends Model
             'abandoned_cart_timeout_hours' => 24,
             'abandoned_cart_discount_type' => 'none',
             'abandoned_cart_discount_value' => 0,
+            'admin_notification_emails' => '',
             'shipping_details' => "Standard Delivery:\nOrders within Bangladesh are typically delivered within 24 to 48 hours.\n\nInternational Shipping:\nFor international orders, please allow 7-10 business days for delivery depending on the destination.\n\nNote: Shipping times may vary during public holidays and peak seasons.",
         ];
     }
@@ -121,6 +122,24 @@ class Setting extends Model
     public static function general(): array
     {
         return array_merge(static::generalDefaults(), static::get('general_settings', []) ?? []);
+    }
+
+    /**
+     * The admin addresses that should be copied on every payment, entered in the
+     * panel one-per-line or comma-separated. Only well-formed emails survive.
+     *
+     * @return array<int, string>
+     */
+    public static function adminNotificationEmails(): array
+    {
+        $raw = static::general()['admin_notification_emails'] ?? '';
+
+        return collect(preg_split('/[\s,]+/', (string) $raw))
+            ->map(fn ($e) => trim($e))
+            ->filter(fn ($e) => $e !== '' && filter_var($e, FILTER_VALIDATE_EMAIL))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
