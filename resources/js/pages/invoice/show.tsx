@@ -28,7 +28,11 @@ export default function InvoiceShow({ invoice, currencySymbol }: { invoice: any,
     };
 
     const maxActiveAmount = Number(invoice.effective_payable_amount ?? invoice.due_amount);
-    
+
+    // When the admin fixed a "Payable Now" amount, the customer pays exactly
+    // that and the field is locked. Otherwise they may pay any part of the due.
+    const isAmountFixed = invoice.payable_amount != null && Number(invoice.payable_amount) > 0;
+
     const [displayAmount, setDisplayAmount] = useState(() => maxActiveAmount.toFixed(2));
 
     const { data, setData, post, processing } = useForm({
@@ -256,6 +260,11 @@ export default function InvoiceShow({ invoice, currencySymbol }: { invoice: any,
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                     Powered by SSLCommerz. All transactions are encrypted and secure.
                                 </p>
+                                {invoice.status !== 'paid' && !isAmountFixed && (
+                                    <p className="mt-1 text-xs font-medium text-shop-primary">
+                                        Pay the full amount or any part of it (up to {formatMoney(maxActiveAmount)}).
+                                    </p>
+                                )}
                             </div>
 
                             {invoice.status !== 'paid' ? (
@@ -270,14 +279,18 @@ export default function InvoiceShow({ invoice, currencySymbol }: { invoice: any,
                                             max={maxActiveAmount.toFixed(2)}
                                             step="0.01"
                                             required
-                                            readOnly
+                                            readOnly={isAmountFixed}
                                             value={displayAmount}
                                             onChange={(e) => {
                                                 setDisplayAmount(e.target.value);
                                                 const num = parseFloat(e.target.value);
                                                 setData('payment_amount', isNaN(num) ? 0 : num);
                                             }}
-                                            className="w-full h-11 pl-8 pr-4 rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/50 text-sm font-medium focus:ring-2 focus:ring-shop-primary/20 focus:border-shop-primary outline-none transition-all shadow-sm cursor-not-allowed text-slate-700 dark:text-slate-300"
+                                            className={`w-full h-11 pl-8 pr-4 rounded-lg border border-slate-300 dark:border-zinc-700 text-sm font-medium focus:ring-2 focus:ring-shop-primary/20 focus:border-shop-primary outline-none transition-all shadow-sm text-slate-700 dark:text-slate-300 ${
+                                                isAmountFixed
+                                                    ? 'bg-slate-50 dark:bg-zinc-800/50 cursor-not-allowed'
+                                                    : 'bg-white dark:bg-zinc-900'
+                                            }`}
                                             placeholder="Enter amount"
                                         />
                                     </div>
