@@ -33,7 +33,8 @@
             @endif
             <tr>
                 <td class="label">When</td>
-                <td class="value">{{ now()->format('d M Y, h:i A') }}</td>
+                {{-- Always show Dhaka time, even if the server clock runs on UTC. --}}
+                <td class="value">{{ now()->setTimezone('Asia/Dhaka')->format('d M Y, h:i A') }} (BST)</td>
             </tr>
         </table>
     </div>
