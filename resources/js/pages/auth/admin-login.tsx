@@ -43,7 +43,7 @@ export default function AdminLogin({ status }: Props) {
                 <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
                     <div className="mb-8 flex flex-col items-center gap-3 text-center">
                         {settings?.logo_url ? (
-                            <img src={settings.logo_url} alt={storeName} className="h-16 object-contain" />
+                            <img src={settings.logo_url} alt={storeName} className="h-auto w-52 max-w-full object-contain" />
                         ) : (
                             <h1 className="text-3xl font-bold tracking-tight text-slate-900">{storeName} Admin</h1>
                         )}
@@ -117,7 +117,15 @@ export default function AdminLogin({ status }: Props) {
                 </div>
 
                 <p className="mt-6 text-center text-xs text-slate-400">
-                    Authorized personnel only. Activity may be monitored.
+                    Designed &amp; Developed by{' '}
+                    <a
+                        href="https://onetech.com.bd"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="transition-colors hover:text-slate-600 hover:underline"
+                    >
+                        ONETECH
+                    </a>
                 </p>
             </div>
         </div>
