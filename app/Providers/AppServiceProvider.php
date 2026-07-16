@@ -45,10 +45,34 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureMail();
+        $this->shareEmailBranding();
 
         // The login form promises "Remember me for 30 days" — Laravel's
         // default remember cookie lasts 400 days, so match the promise.
         \Illuminate\Support\Facades\Auth::guard('web')->setRememberDuration(60 * 24 * 30);
+    }
+
+    /**
+     * Give every email view the store's branding, so the shared layout and each
+     * template's own sections resolve the same store name, logo and colour.
+     */
+    protected function shareEmailBranding(): void
+    {
+        \Illuminate\Support\Facades\View::composer('emails.*', function ($view) {
+            try {
+                $s = Setting::general();
+            } catch (\Throwable $e) {
+                $s = [];
+            }
+
+            $view->with([
+                'brandStoreName' => $s['store_name'] ?? config('app.name'),
+                'themeColor' => $s['theme_color'] ?? '#00704A',
+                'brandStoreEmail' => $s['store_email'] ?? null,
+                'brandStoreAddress' => $s['store_address'] ?? null,
+                'brandLogoUrl' => ! empty($s['logo_url']) ? url($s['logo_url']) : null,
+            ]);
+        });
     }
 
     /**

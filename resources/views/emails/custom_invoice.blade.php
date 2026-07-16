@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Your Custom Invoice</title>
-</head>
-<body>
+@extends('emails.layout')
+
+@section('title', 'Payment Received')
+@section('preheader', 'We received your payment — your receipt is attached.')
+
+@section('content')
     @php
         $symbol = $invoice->currency_code ?: 'BDT';
         $paid = isset($paidNow) ? $paidNow : (float) $invoice->amount;
@@ -12,21 +11,35 @@
         $due = max(0, (float) $invoice->amount - (float) $invoice->amount_paid);
     @endphp
 
+    <h2>{{ $fullyPaid ? 'Payment received — thank you!' : 'Partial payment received' }}</h2>
     <p>Dear {{ $invoice->customer_name }},</p>
+    <p>We've received your payment for <strong>"{{ $invoice->description }}"</strong>. A copy of your invoice is attached as a PDF.</p>
 
-    <p>Thank you for your payment of <strong>{{ $symbol }} {{ number_format($paid, 2) }}</strong>
-        for "{{ $invoice->description }}".</p>
+    <div class="panel">
+        <table class="data-table">
+            <tr>
+                <td class="label">Amount paid</td>
+                <td class="value" style="color: {{ $themeColor }};">{{ $symbol }} {{ number_format($paid, 2) }}</td>
+            </tr>
+            <tr>
+                <td class="label">Invoice total</td>
+                <td class="value">{{ $symbol }} {{ number_format($invoice->amount, 2) }}</td>
+            </tr>
+            @unless($fullyPaid)
+            <tr>
+                <td class="label">Remaining balance</td>
+                <td class="value">{{ $symbol }} {{ number_format($due, 2) }}</td>
+            </tr>
+            @endunless
+        </table>
+    </div>
 
     @if($fullyPaid)
-        <p>Your invoice is now <strong>paid in full</strong>.</p>
+        <p>Your invoice is now <strong>paid in full</strong>. We appreciate your business.</p>
     @else
-        <p>This was a partial payment. Remaining balance due:
-            <strong>{{ $symbol }} {{ number_format($due, 2) }}</strong>.</p>
+        <p>You can pay the remaining balance any time from your invoice link.</p>
+        <div class="btn-wrap">
+            <a href="{{ route('invoice.show', $invoice->uuid) }}" class="btn">View &amp; Pay Invoice</a>
+        </div>
     @endif
-
-    <p>Please find your invoice attached as a PDF document.</p>
-    <br>
-    <p>Best Regards,</p>
-    <p>{{ config('app.name') }}</p>
-</body>
-</html>
+@endsection

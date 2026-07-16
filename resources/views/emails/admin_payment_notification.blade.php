@@ -1,44 +1,42 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Payment Received</title>
-</head>
-<body style="font-family: Arial, Helvetica, sans-serif; color: #0f172a;">
-    <h2 style="margin-bottom: 4px;">💰 Payment Received</h2>
-    <p style="color: #475569; margin-top: 0;">A new payment has just been completed on {{ config('app.name') }}.</p>
+@extends('emails.layout')
 
-    <table cellpadding="8" cellspacing="0" style="border-collapse: collapse; margin-top: 12px;">
-        <tr>
-            <td style="color: #64748b;">Type</td>
-            <td style="font-weight: bold;">{{ $type }}</td>
-        </tr>
-        <tr>
-            <td style="color: #64748b;">Reference</td>
-            <td style="font-weight: bold;">{{ $reference }}</td>
-        </tr>
-        <tr>
-            <td style="color: #64748b;">Customer</td>
-            <td style="font-weight: bold;">{{ $customerName }}</td>
-        </tr>
-        <tr>
-            <td style="color: #64748b;">Amount Paid</td>
-            <td style="font-weight: bold; color: #059669;">{{ $currency }} {{ number_format($amount, 2) }}</td>
-        </tr>
-        @if(!empty($note))
-        <tr>
-            <td style="color: #64748b;">Note</td>
-            <td style="font-weight: bold;">{{ $note }}</td>
-        </tr>
-        @endif
-        <tr>
-            <td style="color: #64748b;">When</td>
-            <td>{{ now()->format('d M Y, h:i A') }}</td>
-        </tr>
-    </table>
+@section('title', 'Payment Received')
+@section('preheader', $currency . ' ' . number_format($amount, 2) . ' received from ' . $customerName)
 
-    <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">
-        You are receiving this because your address is listed under Admin Notification Emails in the store settings.
-    </p>
-</body>
-</html>
+@section('content')
+    <h2>💰 New payment received</h2>
+    <p>A payment has just been completed on your store. Here are the details:</p>
+
+    <div class="panel">
+        <table class="data-table">
+            <tr>
+                <td class="label">Type</td>
+                <td class="value">{{ $type }}</td>
+            </tr>
+            <tr>
+                <td class="label">Reference</td>
+                <td class="value">{{ $reference }}</td>
+            </tr>
+            <tr>
+                <td class="label">Customer</td>
+                <td class="value">{{ $customerName }}</td>
+            </tr>
+            <tr>
+                <td class="label">Amount paid</td>
+                <td class="value" style="color: {{ $themeColor }};">{{ $currency }} {{ number_format($amount, 2) }}</td>
+            </tr>
+            @if(!empty($note))
+            <tr>
+                <td class="label">Note</td>
+                <td class="value">{{ $note }}</td>
+            </tr>
+            @endif
+            <tr>
+                <td class="label">When</td>
+                <td class="value">{{ now()->format('d M Y, h:i A') }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <p class="muted">You're receiving this because your address is listed under Admin Notification Emails in the store settings.</p>
+@endsection

@@ -1,34 +1,30 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Welcome to our shop!</title>
-    <style>
-        body { font-family: sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .btn { display: inline-block; padding: 10px 20px; background-color: #000; color: #fff; text-decoration: none; border-radius: 5px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>Hello, {{ $customer->name }}!</h2>
-        <p>Thank you for placing your order with us. We have created an account for you so you can easily track your orders and shop faster next time.</p>
-        
-        <p>Your login credentials are:</p>
-        <ul>
-            <li><strong>Email:</strong> {{ $customer->email }}</li>
-            <li><strong>Password:</strong> {{ $password }}</li>
-        </ul>
-        
-        <p>We highly recommend changing this password after you log in.</p>
-        
-        <p>
-            <a href="{{ route('login') }}" class="btn">Login to your account</a>
-        </p>
+@extends('emails.layout')
 
-        <p>If you have any questions, please feel free to reply to this email.</p>
+@section('title', 'Welcome')
+@section('preheader', 'Your account is ready — here are your login details.')
 
-        <p>Thanks,<br>
-        {{ config('app.name') }}</p>
+@section('content')
+    <h2>Welcome, {{ $customer->name }}! 🎉</h2>
+    <p>Thank you for your order. We've created an account for you so you can track your orders and check out faster next time.</p>
+
+    <div class="panel">
+        <table class="data-table">
+            <tr>
+                <td class="label">Email</td>
+                <td class="value">{{ $customer->email }}</td>
+            </tr>
+            <tr>
+                <td class="label">Temporary password</td>
+                <td class="value">{{ $password }}</td>
+            </tr>
+        </table>
     </div>
-</body>
-</html>
+
+    <p>For your security, please <strong>change this password</strong> after you log in.</p>
+
+    <div class="btn-wrap">
+        <a href="{{ route('login') }}" class="btn">Log in to your account</a>
+    </div>
+
+    <p class="muted">If you have any questions, just reply to this email — we're happy to help.</p>
+@endsection
