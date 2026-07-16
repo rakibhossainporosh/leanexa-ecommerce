@@ -100,6 +100,7 @@ class CustomInvoiceController extends Controller
             'customer_address' => 'nullable|string|max:500',
             'note' => 'nullable|string|max:2000',
             'payable_amount' => 'nullable|numeric|min:0',
+            'allow_partial' => 'nullable|boolean',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'nullable|exists:products,id',
             'items.*.name' => 'required|string|max:255',
@@ -162,6 +163,7 @@ class CustomInvoiceController extends Controller
             'discount' => $totalDiscount,
             'amount' => $amount,
             'payable_amount' => isset($validated['payable_amount']) && $validated['payable_amount'] !== '' ? round((float) $validated['payable_amount'], 2) : null,
+            'allow_partial' => (bool) ($validated['allow_partial'] ?? false),
             'currency_code' => $validated['currency_code'] ?? null,
             'exchange_rate' => isset($validated['exchange_rate']) ? (float) $validated['exchange_rate'] : 1,
         ];

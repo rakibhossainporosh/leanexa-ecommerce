@@ -47,6 +47,7 @@ export default function InvoicesIndex({ invoices, currencies }: { invoices: any,
         customer_address: string;
         note: string;
         payable_amount: string;
+        allow_partial: boolean;
         currency_code: string;
         exchange_rate: string;
         items: LineItem[];
@@ -57,6 +58,7 @@ export default function InvoicesIndex({ invoices, currencies }: { invoices: any,
         customer_address: '',
         note: '',
         payable_amount: '',
+        allow_partial: false,
         currency_code: initialCurrency,
         exchange_rate: initialRate.toString(),
         items: [],
@@ -162,6 +164,7 @@ export default function InvoicesIndex({ invoices, currencies }: { invoices: any,
             customer_address: invoice.customer_address ?? '',
             note: invoice.note ?? '',
             payable_amount: invoice.payable_amount ?? '',
+            allow_partial: Boolean(invoice.allow_partial),
             currency_code: invoice.currency_code ?? initialCurrency,
             exchange_rate: invoice.exchange_rate ? invoice.exchange_rate.toString() : initialRate.toString(),
             items: (invoice.items ?? []).map((it: any) => ({
@@ -172,7 +175,7 @@ export default function InvoicesIndex({ invoices, currencies }: { invoices: any,
                 discount: Number(it.discount),
             })),
         });
-        setPaymentType(invoice.payable_amount ? 'partial' : 'full');
+        setPaymentType(invoice.allow_partial ? 'partial' : 'full');
         clearErrors();
         setSearch('');
         setResults([]);
@@ -463,7 +466,8 @@ export default function InvoicesIndex({ invoices, currencies }: { invoices: any,
                                                         onChange={() => {
                                                             setPaymentType('full');
                                                             setData('payable_amount', '');
-                                                        }} 
+                                                            setData('allow_partial', false);
+                                                        }}
                                                     />
                                                     <span className="text-sm">Full Amount</span>
                                                 </label>
@@ -471,8 +475,11 @@ export default function InvoicesIndex({ invoices, currencies }: { invoices: any,
                                                     <input 
                                                         type="radio" 
                                                         name="payment_type" 
-                                                        checked={paymentType === 'partial'} 
-                                                        onChange={() => setPaymentType('partial')} 
+                                                        checked={paymentType === 'partial'}
+                                                        onChange={() => {
+                                                            setPaymentType('partial');
+                                                            setData('allow_partial', true);
+                                                        }}
                                                     />
                                                     <span className="text-sm">Partial/Fixed</span>
                                                 </label>

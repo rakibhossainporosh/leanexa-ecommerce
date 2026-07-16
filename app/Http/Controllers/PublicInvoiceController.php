@@ -43,9 +43,20 @@ class PublicInvoiceController extends Controller
             'payment_amount' => 'nullable|numeric|min:0.01',
         ]);
 
-        $paymentAmount = (float) $request->input('payment_amount', $invoice->effective_payable_amount);
-        if ($paymentAmount <= 0 || $paymentAmount > $invoice->effective_payable_amount + 1) { // +1 for floating point rounding
-            return redirect()->back()->with('error', 'Invalid payment amount.');
+        $effective = (float) $invoice->effective_payable_amount;
+
+        // The customer may only choose their own amount when the admin allowed a
+        // partial payment and did not pin a fixed figure. In every other case the
+        // amount is locked server-side, so a tampered request can't underpay.
+        $customerMayChoose = $invoice->allow_partial && ! ($invoice->payable_amount > 0);
+
+        if ($customerMayChoose) {
+            $paymentAmount = (float) $request->input('payment_amount', $effective);
+            if ($paymentAmount <= 0 || $paymentAmount > $effective + 1) { // +1 for floating point rounding
+                return redirect()->back()->with('error', 'Invalid payment amount.');
+            }
+        } else {
+            $paymentAmount = $effective;
         }
 
         // Create a transaction record for this specific payment attempt

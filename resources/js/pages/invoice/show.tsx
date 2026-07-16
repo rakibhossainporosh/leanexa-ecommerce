@@ -29,9 +29,12 @@ export default function InvoiceShow({ invoice, currencySymbol }: { invoice: any,
 
     const maxActiveAmount = Number(invoice.effective_payable_amount ?? invoice.due_amount);
 
-    // When the admin fixed a "Payable Now" amount, the customer pays exactly
-    // that and the field is locked. Otherwise they may pay any part of the due.
-    const isAmountFixed = invoice.payable_amount != null && Number(invoice.payable_amount) > 0;
+    // Three admin-chosen modes:
+    //  - Full Amount (allow_partial false)            -> customer pays the full due (locked)
+    //  - Partial with a fixed "Payable Now" amount    -> customer pays exactly that (locked)
+    //  - Partial with no fixed amount                 -> customer chooses any part of the due
+    const hasFixedAmount = invoice.payable_amount != null && Number(invoice.payable_amount) > 0;
+    const isAmountFixed = !invoice.allow_partial || hasFixedAmount;
 
     const [displayAmount, setDisplayAmount] = useState(() => maxActiveAmount.toFixed(2));
 

@@ -23,6 +23,7 @@ class CustomInvoice extends Model
         'amount',
         'amount_paid',
         'payable_amount',
+        'allow_partial',
         'status',
         'transaction_id',
         'currency_code',
@@ -35,6 +36,7 @@ class CustomInvoice extends Model
         'amount' => 'decimal:2',
         'amount_paid' => 'decimal:2',
         'payable_amount' => 'decimal:2',
+        'allow_partial' => 'boolean',
         'exchange_rate' => 'decimal:4',
     ];
 
