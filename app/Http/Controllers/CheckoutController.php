@@ -126,7 +126,9 @@ class CheckoutController extends Controller
         $ownsOrder = $order->customer_id === auth()->id();
         $viewable = in_array($orderNumber, $request->session()->get('viewable_orders', []), true);
 
-        if (! $ownsOrder && ! $viewable) {
+        // The "View your order" email link is a signed URL, so a recipient with
+        // no checkout session (or not logged in) can still open their own order.
+        if (! $ownsOrder && ! $viewable && ! $request->hasValidSignature()) {
             abort(403, 'Unauthorized access to this order.');
         }
 
