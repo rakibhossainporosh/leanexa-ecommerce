@@ -23,6 +23,9 @@ interface PageSettingsProps {
         shipping_policy: string;
         return_policy: string;
         warranty_policy: string;
+        register_heading: string;
+        register_subtitle: string;
+        register_benefits: string[];
         faq: QA[];
     };
 }
@@ -36,8 +39,27 @@ export default function PageSettingsIndex({ pages }: PageSettingsProps) {
         shipping_policy: pages.shipping_policy || '',
         return_policy: pages.return_policy || '',
         warranty_policy: pages.warranty_policy || '',
+        register_heading: pages.register_heading || '',
+        register_subtitle: pages.register_subtitle || '',
+        register_benefits: pages.register_benefits || [],
         faq: pages.faq || [],
     });
+
+    const addBenefit = () => {
+        setData('register_benefits', [...data.register_benefits, '']);
+    };
+
+    const removeBenefit = (index: number) => {
+        const next = [...data.register_benefits];
+        next.splice(index, 1);
+        setData('register_benefits', next);
+    };
+
+    const updateBenefit = (index: number, value: string) => {
+        const next = [...data.register_benefits];
+        next[index] = value;
+        setData('register_benefits', next);
+    };
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -83,6 +105,55 @@ export default function PageSettingsIndex({ pages }: PageSettingsProps) {
             </div>
 
             <form onSubmit={submit} className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Register Page</CardTitle>
+                        <CardDescription>The heading, subtitle and benefit points shown on the account creation page.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="register_heading">Heading</Label>
+                            <Input
+                                id="register_heading"
+                                value={data.register_heading}
+                                onChange={(e) => setData('register_heading', e.target.value)}
+                                placeholder="Create your account."
+                            />
+                            {errors.register_heading && <p className="text-sm text-red-500">{errors.register_heading}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="register_subtitle">Subtitle</Label>
+                            <Textarea
+                                id="register_subtitle"
+                                rows={2}
+                                value={data.register_subtitle}
+                                onChange={(e) => setData('register_subtitle', e.target.value)}
+                                placeholder="Join thousands of shoppers..."
+                            />
+                            {errors.register_subtitle && <p className="text-sm text-red-500">{errors.register_subtitle}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Benefit points</Label>
+                            {data.register_benefits.map((benefit, index) => (
+                                <div key={index} className="flex items-center gap-2">
+                                    <Input
+                                        value={benefit}
+                                        onChange={(e) => updateBenefit(index, e.target.value)}
+                                        placeholder={`Benefit ${index + 1}`}
+                                    />
+                                    <Button type="button" variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeBenefit(index)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                            {errors['register_benefits.0' as keyof typeof errors] && <p className="text-sm text-red-500">Benefit text is required.</p>}
+                            <Button type="button" variant="outline" size="sm" onClick={addBenefit}>
+                                <Plus className="mr-2 h-4 w-4" /> Add Benefit
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 <Card>
                     <CardHeader>
                         <CardTitle>Our Story</CardTitle>

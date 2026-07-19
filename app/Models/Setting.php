@@ -181,6 +181,13 @@ class Setting extends Model
             'shipping_policy' => '<p>All orders are processed within 1 to 2 business days (excluding weekends and holidays) after receiving your order confirmation email.</p>',
             'return_policy' => '<p>We have a 30-day return policy, which means you have 30 days after receiving your item to request a return.</p>',
             'warranty_policy' => '<p>Our products come with a standard 1-year warranty against manufacturing defects.</p>',
+            'register_heading' => 'Create your account.',
+            'register_subtitle' => 'Join thousands of shoppers and unlock a faster, more personal way to buy.',
+            'register_benefits' => [
+                'Exclusive member pricing',
+                'Save addresses & track orders',
+                'Your data stays protected',
+            ],
             'faq' => [
                 [
                     'question' => 'How long does shipping take?',

@@ -67,9 +67,19 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/register', [
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-        ]));
+        Fortify::registerView(function () {
+            $pages = \App\Models\Setting::pages();
+
+            return Inertia::render('auth/register', [
+                'passwordRules' => Password::defaults()->toPasswordRulesString(),
+                // Admin-editable marketing copy for the register page's side panel.
+                'content' => [
+                    'heading' => $pages['register_heading'] ?? 'Create your account.',
+                    'subtitle' => $pages['register_subtitle'] ?? '',
+                    'benefits' => $pages['register_benefits'] ?? [],
+                ],
+            ]);
+        });
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
 

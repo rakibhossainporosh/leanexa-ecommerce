@@ -16,11 +16,25 @@ import CustomerLayout from '@/layouts/customer-layout';
 
 type Props = {
     passwordRules: string;
+    content?: {
+        heading?: string;
+        subtitle?: string;
+        benefits?: string[];
+    };
 };
 
-export default function Register({ passwordRules }: Props) {
+// Icons cycle through this set by position; extra benefits reuse the last one.
+const BENEFIT_ICONS = [Sparkles, Truck, ShieldCheck];
+
+export default function Register({ passwordRules, content }: Props) {
     const { general_settings: settings } = usePage().props as any;
     const storeName = settings?.store_name || 'EShop';
+
+    const heading = content?.heading || 'Create your account.';
+    const subtitle = content?.subtitle || 'Join thousands of shoppers and unlock a faster, more personal way to buy.';
+    const benefits = content?.benefits?.length
+        ? content.benefits
+        : ['Exclusive member pricing', 'Save addresses & track orders', 'Your data stays protected'];
 
     const [password, setPassword] = useState('');
     const [confirmation, setConfirmation] = useState('');
@@ -48,14 +62,15 @@ export default function Register({ passwordRules }: Props) {
                         </div>
 
                         <div className="relative space-y-4">
-                            <h2 className="text-3xl font-bold leading-tight">Create your account.</h2>
-                            <p className="max-w-sm text-sm text-white/80">
-                                Join thousands of shoppers and unlock a faster, more personal way to buy.
-                            </p>
+                            <h2 className="text-3xl font-bold leading-tight">{heading}</h2>
+                            <p className="max-w-sm text-sm text-white/80">{subtitle}</p>
                             <ul className="space-y-3 pt-2 text-sm text-white/90">
-                                <li className="flex items-center gap-3"><Sparkles className="h-5 w-5 shrink-0" /> Exclusive member pricing</li>
-                                <li className="flex items-center gap-3"><Truck className="h-5 w-5 shrink-0" /> Save addresses & track orders</li>
-                                <li className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 shrink-0" /> Your data stays protected</li>
+                                {benefits.map((benefit, i) => {
+                                    const Icon = BENEFIT_ICONS[i] ?? BENEFIT_ICONS[BENEFIT_ICONS.length - 1];
+                                    return (
+                                        <li key={i} className="flex items-center gap-3"><Icon className="h-5 w-5 shrink-0" /> {benefit}</li>
+                                    );
+                                })}
                             </ul>
                         </div>
 
