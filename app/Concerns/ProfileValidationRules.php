@@ -13,11 +13,11 @@ trait ProfileValidationRules
      *
      * @return array<string, array<int, ValidationRule|array<mixed>|string>>
      */
-    protected function profileRules(?int $userId = null): array
+    protected function profileRules(?int $userId = null, string $model = User::class): array
     {
         return [
             'name' => $this->nameRules(),
-            'email' => $this->emailRules($userId),
+            'email' => $this->emailRules($userId, $model),
         ];
     }
 
@@ -36,16 +36,18 @@ trait ProfileValidationRules
      *
      * @return array<int, ValidationRule|array<mixed>|string>
      */
-    protected function emailRules(?int $userId = null): array
+    protected function emailRules(?int $userId = null, string $model = User::class): array
     {
         return [
             'required',
             'string',
             'email',
             'max:255',
+            // Uniqueness must be checked against the table the account actually
+            // lives in — customers register into `customers`, admins into `users`.
             $userId === null
-                ? Rule::unique(User::class)
-                : Rule::unique(User::class)->ignore($userId),
+                ? Rule::unique($model)
+                : Rule::unique($model)->ignore($userId),
         ];
     }
 }

@@ -20,7 +20,8 @@ class CreateNewUser implements CreatesNewUsers
     public function create(array $input)
     {
         Validator::make($input, [
-            ...$this->profileRules(),
+            // Registration creates a Customer, so check email uniqueness there.
+            ...$this->profileRules(null, Customer::class),
             'password' => $this->passwordRules(),
         ])->validate();
 

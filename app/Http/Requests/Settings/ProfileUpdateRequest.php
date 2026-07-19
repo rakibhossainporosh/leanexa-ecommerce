@@ -17,6 +17,8 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->profileRules($this->user()->id);
+        // Check uniqueness against whichever table the signed-in account lives in
+        // (customers or admin users), ignoring their own row.
+        return $this->profileRules($this->user()->id, $this->user()::class);
     }
 }
