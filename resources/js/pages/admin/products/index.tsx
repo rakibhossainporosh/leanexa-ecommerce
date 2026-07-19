@@ -1,4 +1,17 @@
 import { Head, useForm, router, usePage } from '@inertiajs/react';
+import JoditEditor from 'jodit-react';
+
+const descriptionEditorConfig = {
+    readonly: false,
+    height: 300,
+    placeholder: "Describe the product's features, materials and fit...",
+};
+
+const shortDescriptionEditorConfig = {
+    readonly: false,
+    height: 150,
+    placeholder: 'A brief summary shown near the top of the product page...',
+};
 import {
     Plus,
     Trash2,
@@ -48,7 +61,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
 import { useDataTable } from '@/hooks/use-datatable';
 import type { DataTableColumn } from '@/hooks/use-datatable';
 import AdminLayout from '@/layouts/admin-layout';
@@ -140,6 +152,7 @@ export default function ProductsIndex({
     // explicit blank state and always start "Add" from it.
     const EMPTY_PRODUCT = {
         name: '',
+        short_description: '',
         description: '',
         price: '',
         discount_price: '',
@@ -177,6 +190,7 @@ export default function ProductsIndex({
         setEditingProduct(product);
         setData({
             name: product.name,
+            short_description: product.short_description || '',
             description: product.description || '',
             price: product.price,
             discount_price: product.discount_price || '',
@@ -298,21 +312,29 @@ export default function ProductsIndex({
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="description">
-                                            Description
-                                        </Label>
-                                        <Textarea
-                                            id="description"
-                                            value={data.description}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'description',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder="Describe the product's features, materials and fit..."
-                                            rows={3}
-                                        />
+                                        <Label>Short Description</Label>
+                                        <div className="rounded-md border">
+                                            <JoditEditor
+                                                value={data.short_description}
+                                                config={shortDescriptionEditorConfig}
+                                                onBlur={(newContent) => setData('short_description', newContent)}
+                                            />
+                                        </div>
+                                        {errors.short_description && (
+                                            <p className="text-sm text-destructive">
+                                                {errors.short_description}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Long Description</Label>
+                                        <div className="rounded-md border">
+                                            <JoditEditor
+                                                value={data.description}
+                                                config={descriptionEditorConfig}
+                                                onBlur={(newContent) => setData('description', newContent)}
+                                            />
+                                        </div>
                                         {errors.description && (
                                             <p className="text-sm text-destructive">
                                                 {errors.description}
@@ -1209,11 +1231,19 @@ export default function ProductsIndex({
                                     </div>
                                 </div>
 
-                                {/* Description */}
+                                {/* Short Description (rich text) */}
+                                {viewingProduct.short_description && (
+                                    <div>
+                                        <p className="text-muted-foreground mb-1 text-[11px] font-semibold uppercase tracking-wide">Short Description</p>
+                                        <div className="prose prose-sm max-w-none text-sm leading-relaxed dark:prose-invert" dangerouslySetInnerHTML={{ __html: viewingProduct.short_description }} />
+                                    </div>
+                                )}
+
+                                {/* Long Description (rich text) */}
                                 {viewingProduct.description && (
                                     <div>
-                                        <p className="text-muted-foreground mb-1 text-[11px] font-semibold uppercase tracking-wide">Description</p>
-                                        <p className="text-sm leading-relaxed">{viewingProduct.description}</p>
+                                        <p className="text-muted-foreground mb-1 text-[11px] font-semibold uppercase tracking-wide">Long Description</p>
+                                        <div className="prose prose-sm max-w-none text-sm leading-relaxed dark:prose-invert" dangerouslySetInnerHTML={{ __html: viewingProduct.description }} />
                                     </div>
                                 )}
 

@@ -231,6 +231,13 @@ export default function ProductShow({ product }: { product: any }) {
                             )}
                         </div>
 
+                        {product.short_description && (
+                            <div
+                                className="prose prose-sm max-w-none text-muted-foreground mb-6 -mt-2 dark:prose-invert"
+                                dangerouslySetInnerHTML={{ __html: product.short_description }}
+                            />
+                        )}
+
                         {colorVariants.length > 0 && (
                             <div className="mb-6">
                                 <h3 className="text-sm font-medium mb-3">Select Color</h3>
@@ -385,9 +392,14 @@ export default function ProductShow({ product }: { product: any }) {
                             
                             <div className="pt-5 min-h-[100px]">
                                 {activeTab === 'description' ? (
-                                    <div className="text-muted-foreground text-base/relaxed whitespace-pre-wrap">
-                                        {product.description || 'No description provided.'}
-                                    </div>
+                                    product.description ? (
+                                        <div
+                                            className="prose prose-sm sm:prose-base max-w-none text-muted-foreground dark:prose-invert"
+                                            dangerouslySetInnerHTML={{ __html: product.description }}
+                                        />
+                                    ) : (
+                                        <div className="text-muted-foreground text-base/relaxed">No description provided.</div>
+                                    )
                                 ) : (
                                     <div className="text-muted-foreground text-base/relaxed whitespace-pre-wrap">
                                         {general_settings?.shipping_details || 'Shipping details will be updated soon.'}
