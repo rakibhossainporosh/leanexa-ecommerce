@@ -188,6 +188,13 @@ class Setting extends Model
                 'Save addresses & track orders',
                 'Your data stays protected',
             ],
+            'login_heading' => 'Welcome back to your store.',
+            'login_subtitle' => 'Track orders, manage your wishlist and check out faster — all in one place.',
+            'login_benefits' => [
+                'Secure, encrypted checkout',
+                'Real-time order tracking',
+                'Members-only deals',
+            ],
             'faq' => [
                 [
                     'question' => 'How long does shipping take?',

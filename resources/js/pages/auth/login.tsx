@@ -16,11 +16,25 @@ import CustomerLayout from '@/layouts/customer-layout';
 type Props = {
     status?: string;
     canResetPassword: boolean;
+    content?: {
+        heading?: string;
+        subtitle?: string;
+        benefits?: string[];
+    };
 };
 
-export default function Login({ status, canResetPassword }: Props) {
+// Icons cycle through this set by position; extra benefits reuse the last one.
+const BENEFIT_ICONS = [ShieldCheck, Truck, Sparkles];
+
+export default function Login({ status, canResetPassword, content }: Props) {
     const { general_settings: settings } = usePage().props as any;
     const storeName = settings?.store_name || 'EShop';
+
+    const heading = content?.heading || 'Welcome back to your store.';
+    const subtitle = content?.subtitle || 'Track orders, manage your wishlist and check out faster — all in one place.';
+    const benefits = content?.benefits?.length
+        ? content.benefits
+        : ['Secure, encrypted checkout', 'Real-time order tracking', 'Members-only deals'];
 
     return (
         <CustomerLayout>
@@ -41,14 +55,15 @@ export default function Login({ status, canResetPassword }: Props) {
                         </div>
 
                         <div className="relative space-y-4">
-                            <h2 className="text-3xl font-bold leading-tight">Welcome back to your store.</h2>
-                            <p className="max-w-sm text-sm text-white/80">
-                                Track orders, manage your wishlist and check out faster — all in one place.
-                            </p>
+                            <h2 className="text-3xl font-bold leading-tight">{heading}</h2>
+                            <p className="max-w-sm text-sm text-white/80">{subtitle}</p>
                             <ul className="space-y-3 pt-2 text-sm text-white/90">
-                                <li className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 shrink-0" /> Secure, encrypted checkout</li>
-                                <li className="flex items-center gap-3"><Truck className="h-5 w-5 shrink-0" /> Real-time order tracking</li>
-                                <li className="flex items-center gap-3"><Sparkles className="h-5 w-5 shrink-0" /> Members-only deals</li>
+                                {benefits.map((benefit, i) => {
+                                    const Icon = BENEFIT_ICONS[i] ?? BENEFIT_ICONS[BENEFIT_ICONS.length - 1];
+                                    return (
+                                        <li key={i} className="flex items-center gap-3"><Icon className="h-5 w-5 shrink-0" /> {benefit}</li>
+                                    );
+                                })}
                             </ul>
                         </div>
 

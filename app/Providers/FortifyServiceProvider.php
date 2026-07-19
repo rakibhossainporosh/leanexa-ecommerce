@@ -48,10 +48,20 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
-            'status' => $request->session()->get('status'),
-        ]));
+        Fortify::loginView(function (Request $request) {
+            $pages = \App\Models\Setting::pages();
+
+            return Inertia::render('auth/login', [
+                'canResetPassword' => Features::enabled(Features::resetPasswords()),
+                'status' => $request->session()->get('status'),
+                // Admin-editable marketing copy for the login page's side panel.
+                'content' => [
+                    'heading' => $pages['login_heading'] ?? 'Welcome back to your store.',
+                    'subtitle' => $pages['login_subtitle'] ?? '',
+                    'benefits' => $pages['login_benefits'] ?? [],
+                ],
+            ]);
+        });
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
             'email' => $request->email,

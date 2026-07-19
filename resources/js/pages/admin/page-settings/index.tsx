@@ -26,6 +26,9 @@ interface PageSettingsProps {
         register_heading: string;
         register_subtitle: string;
         register_benefits: string[];
+        login_heading: string;
+        login_subtitle: string;
+        login_benefits: string[];
         faq: QA[];
     };
 }
@@ -42,23 +45,29 @@ export default function PageSettingsIndex({ pages }: PageSettingsProps) {
         register_heading: pages.register_heading || '',
         register_subtitle: pages.register_subtitle || '',
         register_benefits: pages.register_benefits || [],
+        login_heading: pages.login_heading || '',
+        login_subtitle: pages.login_subtitle || '',
+        login_benefits: pages.login_benefits || [],
         faq: pages.faq || [],
     });
 
-    const addBenefit = () => {
-        setData('register_benefits', [...data.register_benefits, '']);
+    // Shared helpers for the register/login benefit lists.
+    type BenefitField = 'register_benefits' | 'login_benefits';
+
+    const addBenefit = (field: BenefitField) => {
+        setData(field, [...data[field], '']);
     };
 
-    const removeBenefit = (index: number) => {
-        const next = [...data.register_benefits];
+    const removeBenefit = (field: BenefitField, index: number) => {
+        const next = [...data[field]];
         next.splice(index, 1);
-        setData('register_benefits', next);
+        setData(field, next);
     };
 
-    const updateBenefit = (index: number, value: string) => {
-        const next = [...data.register_benefits];
+    const updateBenefit = (field: BenefitField, index: number, value: string) => {
+        const next = [...data[field]];
         next[index] = value;
-        setData('register_benefits', next);
+        setData(field, next);
     };
 
     const submit = (e: React.FormEvent) => {
@@ -90,6 +99,14 @@ export default function PageSettingsIndex({ pages }: PageSettingsProps) {
         placeholder: 'Start typings...'
     };
 
+    const TABS = [
+        { id: 'auth', label: 'Register & Login' },
+        { id: 'story', label: 'Our Story' },
+        { id: 'policies', label: 'Policies' },
+        { id: 'faq', label: 'FAQ' },
+    ] as const;
+    const [activeTab, setActiveTab] = React.useState<(typeof TABS)[number]['id']>('auth');
+
     return (
         <AdminLayout>
             <Head title="Page Settings" />
@@ -104,56 +121,80 @@ export default function PageSettingsIndex({ pages }: PageSettingsProps) {
                 <Button onClick={submit} disabled={processing}>Save Changes</Button>
             </div>
 
-            <form onSubmit={submit} className="space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Register Page</CardTitle>
-                        <CardDescription>The heading, subtitle and benefit points shown on the account creation page.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="register_heading">Heading</Label>
-                            <Input
-                                id="register_heading"
-                                value={data.register_heading}
-                                onChange={(e) => setData('register_heading', e.target.value)}
-                                placeholder="Create your account."
-                            />
-                            {errors.register_heading && <p className="text-sm text-red-500">{errors.register_heading}</p>}
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="register_subtitle">Subtitle</Label>
-                            <Textarea
-                                id="register_subtitle"
-                                rows={2}
-                                value={data.register_subtitle}
-                                onChange={(e) => setData('register_subtitle', e.target.value)}
-                                placeholder="Join thousands of shoppers..."
-                            />
-                            {errors.register_subtitle && <p className="text-sm text-red-500">{errors.register_subtitle}</p>}
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Benefit points</Label>
-                            {data.register_benefits.map((benefit, index) => (
-                                <div key={index} className="flex items-center gap-2">
-                                    <Input
-                                        value={benefit}
-                                        onChange={(e) => updateBenefit(index, e.target.value)}
-                                        placeholder={`Benefit ${index + 1}`}
-                                    />
-                                    <Button type="button" variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeBenefit(index)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            ))}
-                            {errors['register_benefits.0' as keyof typeof errors] && <p className="text-sm text-red-500">Benefit text is required.</p>}
-                            <Button type="button" variant="outline" size="sm" onClick={addBenefit}>
-                                <Plus className="mr-2 h-4 w-4" /> Add Benefit
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+            {/* Tab bar — one Save button (top) submits every tab's fields. */}
+            <div className="mb-6 flex flex-wrap gap-1 border-b border-border">
+                {TABS.map((t) => (
+                    <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setActiveTab(t.id)}
+                        className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+                            activeTab === t.id
+                                ? 'border-primary text-primary'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        {t.label}
+                    </button>
+                ))}
+            </div>
 
+            <form onSubmit={submit} className="space-y-6">
+                {activeTab === 'auth' && ([
+                    { title: 'Register Page', desc: 'The heading, subtitle and benefit points shown on the account creation page.', hf: 'register_heading', sf: 'register_subtitle', bf: 'register_benefits' as BenefitField, hp: 'Create your account.', sp: 'Join thousands of shoppers...' },
+                    { title: 'Login Page', desc: 'The heading, subtitle and benefit points shown on the sign-in page.', hf: 'login_heading', sf: 'login_subtitle', bf: 'login_benefits' as BenefitField, hp: 'Welcome back to your store.', sp: 'Track orders, manage your wishlist...' },
+                ] as const).map((s) => (
+                    <Card key={s.bf}>
+                        <CardHeader>
+                            <CardTitle>{s.title}</CardTitle>
+                            <CardDescription>{s.desc}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor={s.hf}>Heading</Label>
+                                <Input
+                                    id={s.hf}
+                                    value={data[s.hf]}
+                                    onChange={(e) => setData(s.hf, e.target.value)}
+                                    placeholder={s.hp}
+                                />
+                                {errors[s.hf as keyof typeof errors] && <p className="text-sm text-red-500">{errors[s.hf as keyof typeof errors]}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor={s.sf}>Subtitle</Label>
+                                <Textarea
+                                    id={s.sf}
+                                    rows={2}
+                                    value={data[s.sf]}
+                                    onChange={(e) => setData(s.sf, e.target.value)}
+                                    placeholder={s.sp}
+                                />
+                                {errors[s.sf as keyof typeof errors] && <p className="text-sm text-red-500">{errors[s.sf as keyof typeof errors]}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Benefit points</Label>
+                                {data[s.bf].map((benefit, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                        <Input
+                                            value={benefit}
+                                            onChange={(e) => updateBenefit(s.bf, index, e.target.value)}
+                                            placeholder={`Benefit ${index + 1}`}
+                                        />
+                                        <Button type="button" variant="ghost" size="icon" className="text-destructive shrink-0" onClick={() => removeBenefit(s.bf, index)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                                {errors[`${s.bf}.0` as keyof typeof errors] && <p className="text-sm text-red-500">Benefit text is required.</p>}
+                                <Button type="button" variant="outline" size="sm" onClick={() => addBenefit(s.bf)}>
+                                    <Plus className="mr-2 h-4 w-4" /> Add Benefit
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+
+                {activeTab === 'story' && (
                 <Card>
                     <CardHeader>
                         <CardTitle>Our Story</CardTitle>
@@ -170,7 +211,10 @@ export default function PageSettingsIndex({ pages }: PageSettingsProps) {
                         </div>
                     </CardContent>
                 </Card>
+                )}
 
+                {activeTab === 'policies' && (
+                <div className="space-y-6">
                 <Card>
                     <CardHeader>
                         <CardTitle>Returns & Refunds</CardTitle>
@@ -272,7 +316,10 @@ export default function PageSettingsIndex({ pages }: PageSettingsProps) {
                         </div>
                     </CardContent>
                 </Card>
+                </div>
+                )}
 
+                {activeTab === 'faq' && (
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
@@ -321,6 +368,7 @@ export default function PageSettingsIndex({ pages }: PageSettingsProps) {
                         </div>
                     </CardContent>
                 </Card>
+                )}
 
                 <div className="flex justify-end">
                     <Button onClick={submit} disabled={processing} size="lg">Save All Changes</Button>
