@@ -43,18 +43,19 @@ function gatewayPost(): array
     return $sent;
 }
 
-test('the gateway is charged the full BDT total even when browsing in USD', function () {
+test('paying while browsing in USD charges the gateway in USD', function () {
     $order = bdtOrder();
-    session(['currency' => 'USD']); // customer is browsing in USD
+    session(['currency' => 'USD']);
 
     app(SslCommerzService::class)->initiatePayment($order, ['name' => 'A', 'email' => 'a@b.com', 'phone' => '01700000000']);
 
     $post = gatewayPost();
-    expect((float) $post['total_amount'])->toBe(1250.0); // NOT 10
-    expect($post['currency'])->toBe('BDT');
+    // 1250 BDT * 0.008 = 10 USD, sent with the USD currency label.
+    expect((float) $post['total_amount'])->toBe(10.0);
+    expect($post['currency'])->toBe('USD');
 });
 
-test('the gateway is charged the full BDT total when browsing in BDT', function () {
+test('paying while browsing in BDT charges the gateway the full BDT total', function () {
     $order = bdtOrder();
     session(['currency' => 'BDT']);
 
