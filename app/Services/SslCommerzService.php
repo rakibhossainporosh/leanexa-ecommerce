@@ -34,7 +34,13 @@ class SslCommerzService
     public function initiatePayment(Order $order, array $customerData): string
     {
         return $this->requestGatewayUrl([
+            // total_amount is stored in the store's currency (BDT). SSLCommerz
+            // settles in BDT, so charge that amount as-is — never the value
+            // converted to whatever currency the customer is browsing in, or the
+            // gateway would treat e.g. "10" (USD-equivalent) as ৳10.
             'total_amount' => $order->total_amount,
+            'currency' => $order->currency ?: 'BDT',
+            'skip_conversion' => true,
             'tran_id' => $order->order_number,
             'cus_add1' => $order->shipping_address ?? 'Dhaka',
             'product_name' => 'E-Commerce Products',
