@@ -23,7 +23,6 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
         tax_rate: settings.tax_rate || 0,
         logo: null as File | null,
         favicon: null as File | null,
-        payment_gateway_image: null as File | null,
         logo_height_desktop: settings.logo_height_desktop || 40,
         logo_height_mobile: settings.logo_height_mobile || 32,
         theme_color: settings.theme_color || '#2b59ff',
@@ -194,25 +193,6 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="payment_gateway_image">Payment Gateway Banner</Label>
-                                <div className="flex items-center gap-4">
-                                    {settings.payment_gateway_image_url && (
-                                        <div className="h-12 w-24 rounded bg-muted flex items-center justify-center overflow-hidden border">
-                                            <img src={settings.payment_gateway_image_url} alt="Payment Banner" className="h-full w-full object-contain" />
-                                        </div>
-                                    )}
-                                    <Input
-                                        id="payment_gateway_image"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => setData('payment_gateway_image', e.target.files?.[0] || null)}
-                                        className="flex-1"
-                                    />
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">JPG, PNG or WebP. Max 2MB. Recommended size: 800x100px (8:1 wide).</p>
-                                {errors.payment_gateway_image && <p className="text-destructive text-sm">{errors.payment_gateway_image}</p>}
-                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="theme_color">Primary Theme Color</Label>
                                 <div className="flex gap-2">

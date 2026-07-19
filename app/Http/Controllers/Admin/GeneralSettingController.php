@@ -31,7 +31,6 @@ class GeneralSettingController extends Controller
             'tax_rate' => 'required|numeric|min:0|max:100',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'favicon' => 'nullable|file|mimes:ico,png,svg,jpg,jpeg,webp|max:1024',
-            'payment_gateway_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'logo_height_desktop' => 'nullable|numeric|min:10|max:200',
             'logo_height_mobile' => 'nullable|numeric|min:10|max:150',
             'theme_color' => ['nullable', 'string', 'regex:/^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$/'],
@@ -81,20 +80,8 @@ class GeneralSettingController extends Controller
             $validated['favicon_url'] = $currentSettings['favicon_url'] ?? '';
         }
         
-        if ($request->hasFile('payment_gateway_image')) {
-            if (!empty($currentSettings['payment_gateway_image_url'])) {
-                $oldPath = str_replace('/storage/', '', $currentSettings['payment_gateway_image_url']);
-                Storage::disk('public')->delete($oldPath);
-            }
-            $path = $request->file('payment_gateway_image')->store('settings', 'public');
-            $validated['payment_gateway_image_url'] = '/storage/' . $path;
-        } else {
-            $validated['payment_gateway_image_url'] = $currentSettings['payment_gateway_image_url'] ?? '';
-        }
-        
         unset($validated['logo']);
         unset($validated['favicon']);
-        unset($validated['payment_gateway_image']);
 
         Setting::set('general_settings', $validated);
 
