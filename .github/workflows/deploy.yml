@@ -64,7 +64,16 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          # Best-effort host-key scan with retries. Never fail the deploy on a
+          # transient blip — the ssh/rsync steps fall back to accept-new anyway.
+          for attempt in 1 2 3 4 5; do
+            if ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+              break
+            fi
+            echo "ssh-keyscan attempt $attempt failed; retrying in 5s..."
+            sleep 5
+          done
+          true
 
       # --delete keeps the server identical to the repo, but every --exclude is
       # also protected from deletion:
@@ -74,7 +83,7 @@ jobs:
       - name: Upload application
         run: |
           rsync -rlptzv --delete \
-            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key" \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30" \
             --exclude='.git' \
             --exclude='.github' \
             --exclude='node_modules' \
@@ -90,6 +99,7 @@ jobs:
       - name: Migrate and refresh caches
         run: |
           ssh -p "${{ secrets.SSH_PORT }}" -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -se <<'REMOTE'
             set -euo pipefail
             cd ~/leanexa
@@ -115,4 +125,5 @@ jobs:
         if: failure()
         run: |
           ssh -p "${{ secrets.SSH_PORT }}" -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" 'cd ~/leanexa && php artisan up' || true
