@@ -65,12 +65,22 @@ class AppServiceProvider extends ServiceProvider
                 $s = [];
             }
 
+            $logoUrl = ! empty($s['logo_url']) ? url($s['logo_url']) : null;
+
+            // Email clients (Gmail, etc.) fetch images from their own servers, so
+            // a localhost URL — what test mail sent from a dev machine produces —
+            // just renders a broken icon. Drop it in that case so the layout falls
+            // back to the store name; live URLs are public and shown normally.
+            if ($logoUrl && preg_match('#^https?://(localhost|127\.0\.0\.1|\[::1\])#i', $logoUrl)) {
+                $logoUrl = null;
+            }
+
             $view->with([
                 'brandStoreName' => $s['store_name'] ?? config('app.name'),
                 'themeColor' => $s['theme_color'] ?? '#00704A',
                 'brandStoreEmail' => $s['store_email'] ?? null,
                 'brandStoreAddress' => $s['store_address'] ?? null,
-                'brandLogoUrl' => ! empty($s['logo_url']) ? url($s['logo_url']) : null,
+                'brandLogoUrl' => $logoUrl,
             ]);
         });
     }

@@ -45,18 +45,21 @@ function gatewayPost(): array
     return $sent;
 }
 
-test('an order is always charged the full BDT total, even when browsing in USD', function () {
+// ---- Orders: charged in whatever currency the customer is browsing in ----
+
+test('an order paid while browsing in USD is sent to the gateway in USD', function () {
     $order = bdtOrder();
-    session(['currency' => 'USD']); // customer browsing in USD
+    session(['currency' => 'USD']);
 
     app(SslCommerzService::class)->initiatePayment($order, ['name' => 'A', 'email' => 'a@b.com', 'phone' => '01700000000']);
 
     $post = gatewayPost();
-    expect((float) $post['total_amount'])->toBe(1250.0); // NOT 10
-    expect($post['currency'])->toBe('BDT');
+    // 1250 BDT * 0.008 = 10 USD — SSLCommerz settles USD to BDT at its own rate.
+    expect((float) $post['total_amount'])->toBe(10.0);
+    expect($post['currency'])->toBe('USD');
 });
 
-test('an order is charged the full BDT total when browsing in BDT', function () {
+test('an order paid while browsing in BDT is sent to the gateway in BDT', function () {
     $order = bdtOrder();
     session(['currency' => 'BDT']);
 
@@ -67,37 +70,36 @@ test('an order is charged the full BDT total when browsing in BDT', function () 
     expect($post['currency'])->toBe('BDT');
 });
 
-test('a USD invoice is charged its BDT equivalent, not its USD face value', function () {
-    // $10 invoice issued at rate 0.008 -> 1250 BDT.
+// ---- Invoices: charged in the currency the invoice was issued in ----
+
+function invoiceAndPayment(string $code, float $amount): CustomInvoicePayment
+{
     $invoice = CustomInvoice::create([
         'uuid' => (string) Str::uuid(), 'customer_name' => 'B', 'customer_email' => 'b@b.com',
-        'customer_phone' => '01700000000', 'subtotal' => 10, 'amount' => 10, 'amount_paid' => 0,
-        'status' => 'pending', 'currency_code' => 'USD', 'exchange_rate' => 0.008,
-    ]);
-    $payment = CustomInvoicePayment::create([
-        'custom_invoice_id' => $invoice->id, 'transaction_id' => 'INV-' . Str::random(8),
-        'amount' => 10, 'status' => 'pending',
+        'customer_phone' => '01700000000', 'subtotal' => $amount, 'amount' => $amount, 'amount_paid' => 0,
+        'status' => 'pending', 'currency_code' => $code, 'exchange_rate' => $code === 'USD' ? 0.008 : 1,
     ]);
 
-    app(SslCommerzService::class)->initiateInvoicePayment($payment, $invoice, ['name' => 'B', 'email' => 'b@b.com', 'phone' => '01700000000']);
+    return CustomInvoicePayment::create([
+        'custom_invoice_id' => $invoice->id, 'transaction_id' => 'INV-' . Str::random(8),
+        'amount' => $amount, 'status' => 'pending',
+    ]);
+}
+
+test('a USD invoice is sent to the gateway in USD', function () {
+    $payment = invoiceAndPayment('USD', 10);
+
+    app(SslCommerzService::class)->initiateInvoicePayment($payment, $payment->invoice, ['name' => 'B', 'email' => 'b@b.com', 'phone' => '01700000000']);
 
     $post = gatewayPost();
-    expect((float) $post['total_amount'])->toBe(1250.0); // NOT 10
-    expect($post['currency'])->toBe('BDT');
+    expect((float) $post['total_amount'])->toBe(10.0);
+    expect($post['currency'])->toBe('USD');
 });
 
-test('a BDT invoice is charged its face value unchanged', function () {
-    $invoice = CustomInvoice::create([
-        'uuid' => (string) Str::uuid(), 'customer_name' => 'C', 'customer_email' => 'c@c.com',
-        'customer_phone' => '01700000000', 'subtotal' => 500, 'amount' => 500, 'amount_paid' => 0,
-        'status' => 'pending', 'currency_code' => 'BDT', 'exchange_rate' => 1,
-    ]);
-    $payment = CustomInvoicePayment::create([
-        'custom_invoice_id' => $invoice->id, 'transaction_id' => 'INV-' . Str::random(8),
-        'amount' => 500, 'status' => 'pending',
-    ]);
+test('a BDT invoice is sent to the gateway in BDT', function () {
+    $payment = invoiceAndPayment('BDT', 500);
 
-    app(SslCommerzService::class)->initiateInvoicePayment($payment, $invoice, ['name' => 'C', 'email' => 'c@c.com', 'phone' => '01700000000']);
+    app(SslCommerzService::class)->initiateInvoicePayment($payment, $payment->invoice, ['name' => 'B', 'email' => 'b@b.com', 'phone' => '01700000000']);
 
     $post = gatewayPost();
     expect((float) $post['total_amount'])->toBe(500.0);

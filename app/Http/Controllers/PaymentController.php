@@ -163,7 +163,8 @@ class PaymentController extends Controller
 
             $this->notifyAdmins(
                 'Custom Invoice',
-                '#' . str_pad((string) $invoice->id, 5, '0', STR_PAD_LEFT),
+                // Match the invoice number customers see (#ABCD1234), not the row id.
+                '#' . strtoupper(explode('-', $invoice->uuid)[0]),
                 (float) $payment->amount,
                 $invoice->currency_code ?: 'BDT',
                 $invoice->customer_name,

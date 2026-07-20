@@ -34,13 +34,11 @@ class SslCommerzService
     public function initiatePayment(Order $order, array $customerData): string
     {
         return $this->requestGatewayUrl([
-            // The SSLCommerz account settles only in BDT, so always charge the
-            // full BDT total. Sending the display-currency value (e.g. "10" for a
-            // USD view) would make the gateway take ৳10 instead of ৳1250. The
-            // customer still sees their currency on the site; their bank converts.
+            // total_amount is stored in BDT. requestGatewayUrl converts it to the
+            // currency the customer is browsing in (top bar or geo-location) and
+            // charges the gateway in that currency — USD -> USD, BDT -> BDT.
+            // SSLCommerz (USD enabled) then settles USD to BDT at its own rate.
             'total_amount' => $order->total_amount,
-            'currency' => $order->currency ?: 'BDT',
-            'skip_conversion' => true,
             'tran_id' => $order->order_number,
             'cus_add1' => $order->shipping_address ?? 'Dhaka',
             'product_name' => 'E-Commerce Products',
@@ -50,20 +48,17 @@ class SslCommerzService
 
     public function initiateInvoicePayment(\App\Models\CustomInvoicePayment $payment, \App\Models\CustomInvoice $invoice, array $customerData): string
     {
-        // The gateway settles only in BDT. A USD invoice stores its amount in USD
-        // with the rate it was issued at (BDT = amount / exchange_rate), so convert
-        // the payment back to BDT — otherwise a $10 invoice would take just ৳10.
-        $rate = (float) ($invoice->exchange_rate ?: 1);
-        $bdtAmount = $rate > 0 ? ((float) $payment->amount) / $rate : (float) $payment->amount;
-
+        // The invoice was issued in a fixed currency (BDT or USD) with its amount
+        // stored in that currency, so charge the gateway in that currency as-is.
+        // SSLCommerz (USD enabled) settles a USD invoice to BDT at its own rate.
         return $this->requestGatewayUrl([
-            'total_amount' => round($bdtAmount, 2),
+            'total_amount' => $payment->amount,
             'tran_id' => $payment->transaction_id,
             'cus_add1' => $customerData['address'] ?? 'Dhaka',
             'product_name' => 'Custom Invoice Payment',
             'product_category' => 'Custom',
             'skip_conversion' => true,
-            'currency' => 'BDT',
+            'currency' => $invoice->currency_code ?: 'BDT',
         ], $customerData, 'SSLCommerz Init Failed (Invoice)');
     }
 
