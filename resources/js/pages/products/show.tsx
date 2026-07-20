@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from "sonner";
 import { Heart, Ruler } from 'lucide-react';
 import { useCurrency } from '@/hooks/use-currency';
@@ -50,6 +50,17 @@ export default function ProductShow({ product }: { product: any }) {
     );
     const [sizeChartGender, setSizeChartGender] = useState<'male' | 'female'>('male');
     const [activeTab, setActiveTab] = useState<'description' | 'shipping'>('description');
+    const [descExpanded, setDescExpanded] = useState(false);
+    const [descOverflows, setDescOverflows] = useState(false);
+    const descRef = useRef<HTMLDivElement>(null);
+
+    // Only show "See more" when the description is actually taller than the
+    // collapsed height (160px) — short descriptions stay as-is.
+    useEffect(() => {
+        if (descRef.current) {
+            setDescOverflows(descRef.current.scrollHeight > 170);
+        }
+    }, [product.description, activeTab]);
     const [userSelectedImage, setUserSelectedImage] = useState<string | null>(null);
 
     const selectedColor = colorVariants.find((v: any) => v.id === selectedColorId);
@@ -393,10 +404,29 @@ export default function ProductShow({ product }: { product: any }) {
                             <div className="pt-5 min-h-[100px]">
                                 {activeTab === 'description' ? (
                                     product.description ? (
-                                        <div
-                                            className="prose prose-sm sm:prose-base max-w-none text-muted-foreground dark:prose-invert"
-                                            dangerouslySetInnerHTML={{ __html: product.description }}
-                                        />
+                                        <div>
+                                            <div className="relative">
+                                                <div
+                                                    ref={descRef}
+                                                    className={`prose prose-sm sm:prose-base max-w-none text-muted-foreground dark:prose-invert overflow-hidden transition-[max-height] duration-300 ${
+                                                        !descExpanded && descOverflows ? 'max-h-[160px]' : 'max-h-none'
+                                                    }`}
+                                                    dangerouslySetInnerHTML={{ __html: product.description }}
+                                                />
+                                                {!descExpanded && descOverflows && (
+                                                    <div className="pointer-events-none absolute bottom-0 left-0 h-16 w-full bg-gradient-to-t from-background to-transparent" />
+                                                )}
+                                            </div>
+                                            {descOverflows && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDescExpanded((v) => !v)}
+                                                    className="mt-2 text-sm font-semibold text-[#00704A] hover:underline"
+                                                >
+                                                    {descExpanded ? 'See less' : 'See more'}
+                                                </button>
+                                            )}
+                                        </div>
                                     ) : (
                                         <div className="text-muted-foreground text-base/relaxed">No description provided.</div>
                                     )
