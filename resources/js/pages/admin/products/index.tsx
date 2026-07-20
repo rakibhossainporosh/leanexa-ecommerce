@@ -119,8 +119,11 @@ export default function ProductsIndex({
     brands: any[];
     tags: any[];
 }) {
-    const { activeCurrency } = usePage().props as any;
-    const currencySymbol = activeCurrency?.symbol || '৳';
+    // Products are priced in the store's default currency, so the admin panel
+    // always shows that currency's symbol — never the visitor-selected one.
+    const { currencies } = usePage().props as any;
+    const defaultCurrency = currencies?.find((c: any) => c.is_default);
+    const currencySymbol = defaultCurrency?.symbol || '৳';
     const [isOpen, setIsOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [viewingProduct, setViewingProduct] = useState<any>(null);
