@@ -161,15 +161,15 @@ class SslCommerzService
             $currency = $currencyCode;
             $gatewayAmount = $baseAmount;
         } else {
+            // total_amount is stored in the store's default currency. Convert it
+            // to the target currency generally — (amount / defaultRate) * targetRate
+            // — so it is correct whichever currency is the default. The old code
+            // special-cased 'BDT' and sent the raw amount, which underpaid when
+            // the default currency was USD (e.g. a $10 order went as ৳10).
             $currency = $currencyCode;
-            if ($currency !== 'BDT') {
-                // Determine rate for the target currency
-                $targetCurrency = $currencies->where('code', $currency)->first();
-                $targetRate = $targetCurrency ? (float) $targetCurrency->exchange_rate : $activeRate;
-                $gatewayAmount = $baseAmount * $targetRate;
-            } else {
-                $gatewayAmount = $baseAmount;
-            }
+            $targetCurrency = $currencies->where('code', $currency)->first();
+            $targetRate = $targetCurrency ? (float) $targetCurrency->exchange_rate : $activeRate;
+            $gatewayAmount = $defaultRate > 0 ? ($baseAmount / $defaultRate) * $targetRate : $baseAmount;
         }
         
         unset($overrides['total_amount'], $overrides['currency']);

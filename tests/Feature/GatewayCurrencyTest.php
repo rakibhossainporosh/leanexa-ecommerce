@@ -105,3 +105,50 @@ test('a BDT invoice is sent to the gateway in BDT', function () {
     expect((float) $post['total_amount'])->toBe(500.0);
     expect($post['currency'])->toBe('BDT');
 });
+
+// ---- Store where USD is the default currency (amounts stored in USD) ----
+// This is the live setup that underpaid: a $10 order stored total_amount=10.
+
+test('with USD as the store default, a BDT payment converts to the full BDT amount', function () {
+    Currency::query()->update(['is_default' => false]);
+    Currency::where('code', 'USD')->update(['is_default' => true, 'exchange_rate' => 1]);
+    Currency::where('code', 'BDT')->update(['exchange_rate' => 125]);
+
+    // Prices stored in the default (USD): a $10 order -> total_amount = 10.
+    $order = Order::create([
+        'customer_id' => Customer::factory()->create()->id,
+        'order_number' => 'ORD-' . strtoupper(Str::random(10)),
+        'status' => 'pending', 'payment_status' => 'unpaid',
+        'subtotal' => 10, 'total_amount' => 10, 'currency' => 'BDT', 'shipping_address' => 'Dhaka',
+    ]);
+    OrderItem::create(['order_id' => $order->id, 'product_id' => Product::factory()->create()->id, 'product_name' => 'X', 'quantity' => 1, 'price' => 10]);
+
+    session(['currency' => 'BDT']);
+    app(SslCommerzService::class)->initiatePayment($order, ['name' => 'A', 'email' => 'a@b.com', 'phone' => '01700000000']);
+
+    $post = gatewayPost();
+    // $10 at 125 BDT/USD = ৳1250 — NOT the raw ৳10 the old code sent.
+    expect((float) $post['total_amount'])->toBe(1250.0);
+    expect($post['currency'])->toBe('BDT');
+});
+
+test('with USD as the store default, a USD payment stays 10 USD', function () {
+    Currency::query()->update(['is_default' => false]);
+    Currency::where('code', 'USD')->update(['is_default' => true, 'exchange_rate' => 1]);
+    Currency::where('code', 'BDT')->update(['exchange_rate' => 125]);
+
+    $order = Order::create([
+        'customer_id' => Customer::factory()->create()->id,
+        'order_number' => 'ORD-' . strtoupper(Str::random(10)),
+        'status' => 'pending', 'payment_status' => 'unpaid',
+        'subtotal' => 10, 'total_amount' => 10, 'currency' => 'BDT', 'shipping_address' => 'Dhaka',
+    ]);
+    OrderItem::create(['order_id' => $order->id, 'product_id' => Product::factory()->create()->id, 'product_name' => 'X', 'quantity' => 1, 'price' => 10]);
+
+    session(['currency' => 'USD']);
+    app(SslCommerzService::class)->initiatePayment($order, ['name' => 'A', 'email' => 'a@b.com', 'phone' => '01700000000']);
+
+    $post = gatewayPost();
+    expect((float) $post['total_amount'])->toBe(10.0);
+    expect($post['currency'])->toBe('USD');
+});
