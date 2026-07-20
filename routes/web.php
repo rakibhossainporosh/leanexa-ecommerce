@@ -181,7 +181,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('products-data', [\App\Http\Controllers\Admin\ProductController::class, 'data'])->name('products.data');
             Route::resource('products', \App\Http\Controllers\Admin\ProductController::class)->except(['create', 'show', 'edit']);
             Route::resource('currencies', \App\Http\Controllers\Admin\CurrencyController::class)->except(['create', 'show', 'edit']);
-            Route::resource('customers', \App\Http\Controllers\Admin\CustomerController::class)->only(['index']);
+            Route::get('customers-data', [\App\Http\Controllers\Admin\CustomerController::class, 'data'])->name('customers.data');
+            Route::resource('customers', \App\Http\Controllers\Admin\CustomerController::class)->only(['index', 'show', 'destroy']);
             Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->only(['index', 'store', 'update', 'destroy']);
             Route::get('invoices-search-products', [\App\Http\Controllers\Admin\CustomInvoiceController::class, 'searchProducts'])->name('invoices.search-products');
             Route::get('invoices/{invoice}/pdf', [\App\Http\Controllers\Admin\CustomInvoiceController::class, 'pdf'])->name('invoices.pdf');
