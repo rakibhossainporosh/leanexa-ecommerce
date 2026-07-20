@@ -181,40 +181,47 @@ export default function ProductShow({ product }: { product: any }) {
                                 <span className="text-muted-foreground text-lg">No Image Available</span>
                             )}
                         </div>
-                        {/* Thumbnails */}
-                        {product.variants?.some((v: any) => v.image_path) && (
-                            <div className="flex gap-3 overflow-x-auto pb-2">
-                                {product.images?.length > 0 && (
-                                    <button
-                                        onClick={() => setUserSelectedImage(product.images[0].image_path)}
-                                        className={`w-20 h-20 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
-                                            displayImage === product.images[0].image_path ? 'border-primary' : 'border-transparent hover:border-primary/50'
-                                        }`}
-                                    >
-                                        <img src={product.images[0].image_path} className="object-cover w-full h-full" alt="Main" />
-                                    </button>
-                                )}
-                                {product.variants.filter((v: any) => v.image_path).map((variant: any) => (
-                                    <button
-                                        key={variant.id}
-                                        onClick={() => {
-                                            if (variant.type === 'size') {
-                                                setSelectedSizeId(variant.id);
-                                            } else {
-                                                setSelectedColorId(variant.id);
-                                                setUserSelectedImage(variant.image_path);
-                                            }
-                                        }}
-                                        className={`w-20 h-20 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
-                                            displayImage === variant.image_path ? 'border-primary' : 'border-transparent hover:border-primary/50'
-                                        }`}
-                                        title={variant.name}
-                                    >
-                                        <img src={variant.image_path} className="object-cover w-full h-full" alt={variant.name} />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        {/* Thumbnails: product image + every image of each colour variant */}
+                        {(() => {
+                            const variantImagesOf = (v: any): string[] =>
+                                Array.isArray(v.images) && v.images.length > 0
+                                    ? v.images
+                                    : (v.image_path ? [v.image_path] : []);
+
+                            const thumbs: { src: string; variant: any | null }[] = [];
+                            if (product.images?.length > 0) {
+                                thumbs.push({ src: product.images[0].image_path, variant: null });
+                            }
+                            (product.variants || []).forEach((v: any) => {
+                                variantImagesOf(v).forEach((src: string) => thumbs.push({ src, variant: v }));
+                            });
+
+                            if (thumbs.length <= 1) return null;
+
+                            return (
+                                <div className="flex gap-3 overflow-x-auto pb-2">
+                                    {thumbs.map((thumb, i) => (
+                                        <button
+                                            key={`${thumb.src}-${i}`}
+                                            onClick={() => {
+                                                if (thumb.variant && thumb.variant.type === 'size') {
+                                                    setSelectedSizeId(thumb.variant.id);
+                                                } else if (thumb.variant) {
+                                                    setSelectedColorId(thumb.variant.id);
+                                                }
+                                                setUserSelectedImage(thumb.src);
+                                            }}
+                                            className={`w-20 h-20 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+                                                displayImage === thumb.src ? 'border-primary' : 'border-transparent hover:border-primary/50'
+                                            }`}
+                                            title={thumb.variant?.name || 'Main'}
+                                        >
+                                            <img src={thumb.src} className="object-cover w-full h-full" alt={thumb.variant?.name || 'Main'} />
+                                        </button>
+                                    ))}
+                                </div>
+                            );
+                        })()}
                     </div>
                     
                     {/* Details Section */}

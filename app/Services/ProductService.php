@@ -74,6 +74,7 @@ class ProductService
                         'stock' => $variant['stock'] ?? 0,
                         'sku' => $variant['sku'] ?? null,
                         'image_path' => $variant['image_path'] ?? null,
+                        'images' => $variant['images'] ?? [],
                     ]);
                 }
             }
@@ -112,6 +113,7 @@ class ProductService
                                 'stock' => $variant['stock'] ?? 0,
                                 'sku' => $variant['sku'] ?? null,
                                 'image_path' => array_key_exists('image_path', $variant) ? $variant['image_path'] : $v->image_path,
+                                'images' => array_key_exists('images', $variant) ? $variant['images'] : $v->images,
                             ]);
                             $existingVariantIds[] = $v->id;
                         }
@@ -123,6 +125,7 @@ class ProductService
                             'stock' => $variant['stock'] ?? 0,
                             'sku' => $variant['sku'] ?? null,
                             'image_path' => $variant['image_path'] ?? null,
+                            'images' => $variant['images'] ?? [],
                         ]);
                         $existingVariantIds[] = $newVariant->id;
                     }

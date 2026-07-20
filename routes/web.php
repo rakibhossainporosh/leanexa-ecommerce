@@ -179,7 +179,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::resource('tags', \App\Http\Controllers\Admin\TagController::class)->except(['create', 'show', 'edit']);
             Route::resource('brands', \App\Http\Controllers\Admin\BrandController::class)->except(['create', 'show', 'edit']);
             Route::get('products-data', [\App\Http\Controllers\Admin\ProductController::class, 'data'])->name('products.data');
-            Route::resource('products', \App\Http\Controllers\Admin\ProductController::class)->except(['create', 'show', 'edit']);
+            Route::resource('products', \App\Http\Controllers\Admin\ProductController::class)->except(['show']);
             Route::resource('currencies', \App\Http\Controllers\Admin\CurrencyController::class)->except(['create', 'show', 'edit']);
             Route::get('customers-data', [\App\Http\Controllers\Admin\CustomerController::class, 'data'])->name('customers.data');
             Route::resource('customers', \App\Http\Controllers\Admin\CustomerController::class)->only(['index', 'show', 'destroy']);

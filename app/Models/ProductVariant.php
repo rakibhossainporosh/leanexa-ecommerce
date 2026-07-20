@@ -14,6 +14,11 @@ class ProductVariant extends Model
         'stock',
         'sku',
         'image_path',
+        'images',
+    ];
+
+    protected $casts = [
+        'images' => 'array',
     ];
 
     public function product()

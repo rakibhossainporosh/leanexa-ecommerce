@@ -21,15 +21,37 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $categories = $this->categoryService->getAllCategories();
-        $tags = $this->tagService->getAllTags();
-        $brands = $this->brandService->getAllBrands();
+        return Inertia::render('admin/products/index');
+    }
 
-        return Inertia::render('admin/products/index', [
-            'categories' => $categories,
-            'tags' => $tags,
-            'brands' => $brands
-        ]);
+    public function create()
+    {
+        return Inertia::render('admin/products/create', $this->formOptions());
+    }
+
+    public function edit($id)
+    {
+        $product = \App\Models\Product::with(['category', 'brand', 'tags', 'images', 'variants'])
+            ->findOrFail($id);
+
+        return Inertia::render('admin/products/edit', array_merge(
+            ['product' => $product],
+            $this->formOptions()
+        ));
+    }
+
+    /**
+     * Category / tag / brand lists shared by the create and edit forms.
+     *
+     * @return array<string, mixed>
+     */
+    private function formOptions(): array
+    {
+        return [
+            'categories' => $this->categoryService->getAllCategories(),
+            'tags' => $this->tagService->getAllTags(),
+            'brands' => $this->brandService->getAllBrands(),
+        ];
     }
 
     /**
@@ -81,6 +103,12 @@ class ProductController extends Controller
             'variants.*.price' => 'nullable|numeric|min:0',
             'variants.*.stock' => 'nullable|integer|min:0',
             'variants.*.sku' => 'nullable|string|max:255|distinct|unique:product_variants,sku',
+            // A variant can carry several images: new uploads + kept/library URLs.
+            'variants.*.new_images' => 'nullable|array',
+            'variants.*.new_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:20480',
+            'variants.*.kept_images' => 'nullable|array',
+            'variants.*.kept_images.*' => 'nullable|string|max:2048',
+            // Legacy single-image fields (kept for backward compatibility).
             'variants.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:20480',
             'variants.*.image_url' => 'nullable|string|max:2048',
         ]);
@@ -90,14 +118,11 @@ class ProductController extends Controller
         $images = [];
 
         foreach ($variants as $index => &$variant) {
-            if ($request->hasFile("variants.{$index}.image")) {
-                $variant['image_path'] = '/storage/' . app(\App\Services\ImageService::class)->compressAndStore($request->file("variants.{$index}.image"), 'products');
-            } elseif (!empty($variant['image_url'])) {
-                $variant['image_path'] = $this->normalizeMediaPath($variant['image_url']);
-            } else {
-                $variant['image_path'] = null;
-            }
+            $built = $this->buildVariantImages($request, $index, $variant);
+            $variant['image_path'] = $built['image_path'];
+            $variant['images'] = $built['images'];
         }
+        unset($variant);
 
         if ($request->hasFile('image')) {
             $path = app(\App\Services\ImageService::class)->compressAndStore($request->file('image'), 'products');
@@ -113,7 +138,7 @@ class ProductController extends Controller
 
         $this->productService->createProduct($validated, $tags, $images, [], $variants);
 
-        return redirect()->back()->with('success', 'Product created successfully.');
+        return redirect()->route('admin.products.index')->with('success', 'Product created successfully.');
     }
 
     public function update(Request $request, $id)
@@ -157,6 +182,12 @@ class ProductController extends Controller
                     }
                 }
             ],
+            // A variant can carry several images: new uploads + kept/library URLs.
+            'variants.*.new_images' => 'nullable|array',
+            'variants.*.new_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:20480',
+            'variants.*.kept_images' => 'nullable|array',
+            'variants.*.kept_images.*' => 'nullable|string|max:2048',
+            // Legacy single-image fields (kept for backward compatibility).
             'variants.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:20480',
             'variants.*.image_url' => 'nullable|string|max:2048',
         ]);
@@ -165,19 +196,14 @@ class ProductController extends Controller
         $variants = $request->input('variants', []);
 
         foreach ($variants as $index => &$variant) {
-            if ($request->hasFile("variants.{$index}.image")) {
-                $variant['image_path'] = '/storage/' . app(\App\Services\ImageService::class)->compressAndStore($request->file("variants.{$index}.image"), 'products');
-            } elseif (!empty($variant['image_url'])) {
-                $variant['image_path'] = $this->normalizeMediaPath($variant['image_url']);
-            }
-            // we don't nullify if not present in update, to keep existing image if unchanged?
-            // Actually, if frontend clears it, it might pass empty string. Let's nullify if explicitly empty image_url and no file.
-            // But if it's not present at all, maybe don't touch.
-            // Let's assume if it is present and empty, it means clear.
-            elseif (array_key_exists('image_url', $variant) && empty($variant['image_url'])) {
-                $variant['image_path'] = null;
-            }
+            // The form always submits the full desired image set (kept URLs +
+            // new uploads), so we rebuild the list rather than guessing what
+            // changed. Colour variants only.
+            $built = $this->buildVariantImages($request, $index, $variant);
+            $variant['image_path'] = $built['image_path'];
+            $variant['images'] = $built['images'];
         }
+        unset($variant);
 
         unset($validated['tags']);
         unset($validated['image']);
@@ -204,7 +230,52 @@ class ProductController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Product updated successfully.');
+        return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
+    }
+
+    /**
+     * Build a variant's ordered image list from the submitted request.
+     * Kept/library URLs come first (in the order the admin arranged them),
+     * followed by any newly uploaded files. Size variants get no images.
+     *
+     * @return array{image_path: ?string, images: array<int, string>}
+     */
+    private function buildVariantImages(Request $request, int|string $index, array $variant): array
+    {
+        if (($variant['type'] ?? 'color') === 'size') {
+            return ['image_path' => null, 'images' => []];
+        }
+
+        $images = [];
+
+        // Existing images the form chose to keep (already stored or picked from
+        // the media library), preserving their submitted order.
+        foreach ((array) $request->input("variants.{$index}.kept_images", []) as $url) {
+            if (is_string($url) && $url !== '') {
+                $images[] = $this->normalizeMediaPath($url);
+            }
+        }
+
+        // Newly uploaded files, appended after the kept ones.
+        foreach ((array) $request->file("variants.{$index}.new_images", []) as $file) {
+            if ($file) {
+                $images[] = '/storage/' . app(\App\Services\ImageService::class)->compressAndStore($file, 'products');
+            }
+        }
+
+        // Backward compatibility with the old single-image fields.
+        if (empty($images)) {
+            if ($request->hasFile("variants.{$index}.image")) {
+                $images[] = '/storage/' . app(\App\Services\ImageService::class)->compressAndStore($request->file("variants.{$index}.image"), 'products');
+            } elseif (! empty($variant['image_url'])) {
+                $images[] = $this->normalizeMediaPath($variant['image_url']);
+            }
+        }
+
+        return [
+            'image_path' => $images[0] ?? null,
+            'images' => $images,
+        ];
     }
 
     /**

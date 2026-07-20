@@ -1,29 +1,4 @@
-import { Head, useForm, router, usePage } from '@inertiajs/react';
-import JoditEditor from 'jodit-react';
-
-// Paste rich content straight in as clean HTML — never pop the "keep as HTML /
-// insert as text" dialog, whose "as text" option escaped tags into &lt;p&gt;
-// that then showed up literally on the storefront.
-const pasteBehaviour = {
-    askBeforePasteHTML: false,
-    askBeforePasteFromWord: false,
-    defaultActionOnPaste: 'insert_clear_html' as const,
-    processPasteHTML: true,
-};
-
-const descriptionEditorConfig = {
-    readonly: false,
-    height: 300,
-    placeholder: "Describe the product's features, materials and fit...",
-    ...pasteBehaviour,
-};
-
-const shortDescriptionEditorConfig = {
-    readonly: false,
-    height: 150,
-    placeholder: 'A brief summary shown near the top of the product page...',
-    ...pasteBehaviour,
-};
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Plus,
     Trash2,
@@ -31,9 +6,6 @@ import {
     Eye,
     PackageSearch,
     Image as ImageIcon,
-    X,
-    RefreshCw,
-    ImagePlus,
     Search,
     ChevronLeft,
     ChevronRight,
@@ -42,22 +14,18 @@ import {
     ChevronDown,
     Loader2,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
-import MediaPicker from '@/components/media-picker';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -122,26 +90,13 @@ function SortIndicator({
     );
 }
 
-export default function ProductsIndex({
-    categories,
-    brands,
-    tags,
-}: {
-    categories: any[];
-    brands: any[];
-    tags: any[];
-}) {
+export default function ProductsIndex() {
     // Products are priced in the store's default currency, so the admin panel
     // always shows that currency's symbol — never the visitor-selected one.
     const { currencies } = usePage().props as any;
     const defaultCurrency = currencies?.find((c: any) => c.is_default);
     const currencySymbol = defaultCurrency?.symbol || '৳';
-    const [isOpen, setIsOpen] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<any>(null);
     const [viewingProduct, setViewingProduct] = useState<any>(null);
-    const [pickerOpen, setPickerOpen] = useState(false);
-    const [variantPickerIndex, setVariantPickerIndex] = useState<number | null>(null);
-    const imageInputRef = useRef<HTMLInputElement>(null);
 
     // Server-side DataTable via yajra/laravel-datatables.
     const {
@@ -162,76 +117,6 @@ export default function ProductsIndex({
         from,
         to,
     } = useDataTable('/admin/products-data', DT_COLUMNS);
-    // Inertia's useForm updates its "defaults" to the submitted values after a
-    // successful post, so reset() would refill the last product's data. Keep an
-    // explicit blank state and always start "Add" from it.
-    const EMPTY_PRODUCT = {
-        name: '',
-        short_description: '',
-        description: '',
-        price: '',
-        discount_price: '',
-        stock: '',
-        category_id: '',
-        brand_id: '',
-        tags: [] as number[],
-        image: null as File | null,
-        image_url: '',
-        variants: [] as any[],
-        _method: 'post',
-    };
-
-    const { data, setData, post, processing, errors, clearErrors } = useForm<typeof EMPTY_PRODUCT>({ ...EMPTY_PRODUCT });
-
-    const blankForm = () => setData({ ...EMPTY_PRODUCT, variants: [] });
-
-    const submit = (e: React.FormEvent) => {
-        e.preventDefault();
-        const url = editingProduct
-            ? `/admin/products/${editingProduct.id}`
-            : '/admin/products';
-        post(url, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setIsOpen(false);
-                setEditingProduct(null);
-                blankForm();
-                loadData();
-            },
-        });
-    };
-
-    const handleEdit = (product: any) => {
-        setEditingProduct(product);
-        setData({
-            name: product.name,
-            short_description: product.short_description || '',
-            description: product.description || '',
-            price: product.price,
-            discount_price: product.discount_price || '',
-            stock: product.stock,
-            category_id: product.category_id ? String(product.category_id) : '',
-            brand_id: product.brand_id ? String(product.brand_id) : '',
-            tags: product.tags ? product.tags.map((t: any) => t.id) : [],
-            image: null,
-            image_url: '',
-            variants: product.variants || [],
-            _method: 'put',
-        });
-        setIsOpen(true);
-    };
-
-    const handleOpenChange = (open: boolean) => {
-        setIsOpen(open);
-
-        if (!open) {
-            setTimeout(() => {
-                setEditingProduct(null);
-                blankForm();
-                clearErrors();
-            }, 300);
-        }
-    };
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this product?')) {
@@ -242,9 +127,6 @@ export default function ProductsIndex({
         }
     };
 
-    const variantError = (index: number) =>
-        (errors as Record<string, string>)[`variants.${index}.sku`];
-
     return (
         <AdminLayout title="Products">
             <Head title="Manage Products" />
@@ -254,662 +136,11 @@ export default function ProductsIndex({
                     Manage your store's inventory and pricing.
                 </p>
 
-                <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-                    <DialogTrigger asChild>
-                        <Button
-                            onClick={() => {
-                                blankForm();
-                                clearErrors();
-                                setEditingProduct(null);
-                            }}
-                        >
-                            <Plus className="mr-2 h-4 w-4" /> Add Product
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent
-                        className="max-h-[92vh] overflow-y-auto p-0 sm:max-w-2xl"
-                        // Clicks inside the stacked MediaPicker dialog register as
-                        // "outside" of this dialog — don't let them dismiss it.
-                        onInteractOutside={(e) => {
-                            if (pickerOpen) {
-                                e.preventDefault();
-                            }
-                        }}
-                        onEscapeKeyDown={(e) => {
-                            if (pickerOpen) {
-                                e.preventDefault();
-                            }
-                        }}
-                        // When the picker unmounts, focus briefly lands outside this
-                        // dialog and would dismiss it — focus is trapped anyway.
-                        onFocusOutside={(e) => e.preventDefault()}
-                    >
-                        <DialogHeader className="border-b px-6 py-4">
-                            <DialogTitle className="text-lg">
-                                {editingProduct
-                                    ? 'Edit Product'
-                                    : 'Create Product'}
-                            </DialogTitle>
-                            <p className="text-sm font-normal text-muted-foreground">
-                                {editingProduct
-                                    ? 'Update the details of this product.'
-                                    : 'Fill in the details below to add a new product to your catalog.'}
-                            </p>
-                        </DialogHeader>
-
-                        <form onSubmit={submit}>
-                            <div className="space-y-6 px-6 py-5">
-                                {/* ---- Basic information ---- */}
-                                <section className="space-y-4">
-                                    <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        Basic Information
-                                    </h3>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="name">
-                                            Product Name{' '}
-                                            <span className="text-destructive">
-                                                *
-                                            </span>
-                                        </Label>
-                                        <Input
-                                            id="name"
-                                            value={data.name}
-                                            onChange={(e) =>
-                                                setData('name', e.target.value)
-                                            }
-                                            placeholder="e.g. Nike Air Zoom Pegasus 41"
-                                            className="h-10"
-                                        />
-                                        {errors.name && (
-                                            <p className="text-sm text-destructive">
-                                                {errors.name}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Short Description</Label>
-                                        <div className="rounded-md border">
-                                            <JoditEditor
-                                                value={data.short_description}
-                                                config={shortDescriptionEditorConfig}
-                                                onBlur={(newContent) => setData('short_description', newContent)}
-                                            />
-                                        </div>
-                                        {errors.short_description && (
-                                            <p className="text-sm text-destructive">
-                                                {errors.short_description}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Long Description</Label>
-                                        <div className="rounded-md border">
-                                            <JoditEditor
-                                                value={data.description}
-                                                config={descriptionEditorConfig}
-                                                onBlur={(newContent) => setData('description', newContent)}
-                                            />
-                                        </div>
-                                        {errors.description && (
-                                            <p className="text-sm text-destructive">
-                                                {errors.description}
-                                            </p>
-                                        )}
-                                    </div>
-                                </section>
-
-                                {/* ---- Pricing & inventory ---- */}
-                                <section className="space-y-4 border-t pt-5">
-                                    <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        Pricing &amp; Inventory
-                                    </h3>
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="price">
-                                                Price{' '}
-                                                <span className="text-destructive">
-                                                    *
-                                                </span>
-                                            </Label>
-                                            <div className="relative">
-                                                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
-                                                    {currencySymbol}
-                                                </span>
-                                                <Input
-                                                    id="price"
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={data.price}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'price',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="0.00"
-                                                    className="h-10 pl-7"
-                                                />
-                                            </div>
-                                            {errors.price && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.price}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="discount_price">
-                                                Sale Price
-                                            </Label>
-                                            <div className="relative">
-                                                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
-                                                    {currencySymbol}
-                                                </span>
-                                                <Input
-                                                    id="discount_price"
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={data.discount_price}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'discount_price',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Optional"
-                                                    className="h-10 pl-7"
-                                                />
-                                            </div>
-                                            {errors.discount_price && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.discount_price}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="stock">
-                                                Stock{' '}
-                                                <span className="text-destructive">
-                                                    *
-                                                </span>
-                                            </Label>
-                                            <Input
-                                                id="stock"
-                                                type="number"
-                                                value={data.stock}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'stock',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                placeholder="0"
-                                                className="h-10"
-                                            />
-                                            {errors.stock && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.stock}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </section>
-
-                                {/* ---- Organization ---- */}
-                                <section className="space-y-4 border-t pt-5">
-                                    <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        Organization
-                                    </h3>
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="category_id">
-                                                Category
-                                            </Label>
-                                            <Select
-                                                value={data.category_id}
-                                                onValueChange={(v) =>
-                                                    setData('category_id', v)
-                                                }
-                                            >
-                                                <SelectTrigger
-                                                    id="category_id"
-                                                    className="h-10 w-full"
-                                                >
-                                                    <SelectValue placeholder="Select a category" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {categories.map((cat) => (
-                                                        <SelectItem
-                                                            key={cat.id}
-                                                            value={String(
-                                                                cat.id,
-                                                            )}
-                                                        >
-                                                            {cat.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.category_id && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.category_id}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="brand_id">
-                                                Brand
-                                            </Label>
-                                            <Select
-                                                value={data.brand_id}
-                                                onValueChange={(v) =>
-                                                    setData('brand_id', v)
-                                                }
-                                            >
-                                                <SelectTrigger
-                                                    id="brand_id"
-                                                    className="h-10 w-full"
-                                                >
-                                                    <SelectValue placeholder="Select a brand" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {brands.map((brand) => (
-                                                        <SelectItem
-                                                            key={brand.id}
-                                                            value={String(
-                                                                brand.id,
-                                                            )}
-                                                        >
-                                                            {brand.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.brand_id && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.brand_id}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2 sm:col-span-2">
-                                            <Label>Tags</Label>
-                                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 pt-2">
-                                                {tags.map((tag) => (
-                                                    <div key={tag.id} className="flex items-center space-x-2">
-                                                        <Checkbox
-                                                            id={`tag-${tag.id}`}
-                                                            checked={data.tags.includes(tag.id)}
-                                                            onCheckedChange={(checked) => {
-                                                                if (checked) {
-                                                                    setData('tags', [...data.tags, tag.id]);
-                                                                } else {
-                                                                    setData('tags', data.tags.filter((id) => id !== tag.id));
-                                                                }
-                                                            }}
-                                                        />
-                                                        <Label htmlFor={`tag-${tag.id}`} className="font-normal cursor-pointer">
-                                                            {tag.name}
-                                                        </Label>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                {/* ---- Variants ---- */}
-                                <section className="space-y-3 border-t pt-5">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                                Variants
-                                            </h3>
-                                            <p className="mt-1 text-xs text-muted-foreground">
-                                                Sizes, colors or other options
-                                                with their own stock.
-                                            </p>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                setData('variants', [
-                                                    ...data.variants,
-                                                    {
-                                                        type: 'color',
-                                                        name: '',
-                                                        price: '',
-                                                        stock: '',
-                                                        sku: '',
-                                                    },
-                                                ])
-                                            }
-                                            className="h-8 text-xs"
-                                        >
-                                            <Plus className="mr-1 h-3 w-3" />{' '}
-                                            Add Variant
-                                        </Button>
-                                    </div>
-
-                                    {data.variants.length === 0 ? (
-                                        <p className="rounded-lg border border-dashed py-4 text-center text-xs text-muted-foreground">
-                                            No variants — the product will be
-                                            sold as a single item.
-                                        </p>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            <div className="border rounded-md overflow-hidden">
-                                                <Table>
-                                                    <TableHeader className="bg-muted/50">
-                                                        <TableRow>
-                                                            <TableHead className="w-[30%] text-xs">Type & Name</TableHead>
-                                                            <TableHead className="w-[15%] text-xs">Price</TableHead>
-                                                            <TableHead className="w-[15%] text-xs">Stock</TableHead>
-                                                            <TableHead className="w-[20%] text-xs">SKU</TableHead>
-                                                            <TableHead className="w-[15%] text-center text-xs">Image</TableHead>
-                                                            <TableHead className="w-[5%]"></TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {data.variants.map((variant, index) => (
-                                                            <TableRow key={index} className="group/row bg-card hover:bg-muted/20">
-                                                                <TableCell className="p-2 align-top">
-                                                                    <div className="flex gap-1">
-                                                                        <Select
-                                                                            value={variant.type || 'color'}
-                                                                            onValueChange={(val) => {
-                                                                                const v = [...data.variants];
-                                                                                v[index].type = val;
-                                                                                // If switched to size, we might want to clear the image, but let's just let the controller handle it or ignore.
-                                                                                setData('variants', v);
-                                                                            }}
-                                                                        >
-                                                                            <SelectTrigger className="w-[85px] h-9 text-xs">
-                                                                                <SelectValue />
-                                                                            </SelectTrigger>
-                                                                            <SelectContent>
-                                                                                <SelectItem value="color">Color</SelectItem>
-                                                                                <SelectItem value="size">Size</SelectItem>
-                                                                            </SelectContent>
-                                                                        </Select>
-                                                                        <Input
-                                                                            placeholder="e.g. Size 42"
-                                                                            value={variant.name}
-                                                                            onChange={(e) => {
-                                                                                const v = [...data.variants];
-                                                                                v[index].name = e.target.value;
-                                                                                setData('variants', v);
-                                                                            }}
-                                                                            className="h-9 flex-1 text-sm bg-transparent"
-                                                                            required
-                                                                        />
-                                                                    </div>
-                                                                </TableCell>
-                                                                <TableCell className="p-2 align-top">
-                                                                    <Input
-                                                                        placeholder="Inherit"
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        value={variant.price}
-                                                                        onChange={(e) => {
-                                                                            const v = [...data.variants];
-                                                                            v[index].price = e.target.value;
-                                                                            setData('variants', v);
-                                                                        }}
-                                                                        className="h-9 text-sm bg-transparent"
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell className="p-2 align-top">
-                                                                    <Input
-                                                                        placeholder="0"
-                                                                        type="number"
-                                                                        value={variant.stock}
-                                                                        onChange={(e) => {
-                                                                            const v = [...data.variants];
-                                                                            v[index].stock = e.target.value;
-                                                                            setData('variants', v);
-                                                                        }}
-                                                                        className="h-9 text-sm bg-transparent"
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell className="p-2 align-top">
-                                                                    <div className="flex gap-1">
-                                                                        <Input
-                                                                            placeholder="Auto"
-                                                                            value={variant.sku}
-                                                                            onChange={(e) => {
-                                                                                const v = [...data.variants];
-                                                                                v[index].sku = e.target.value;
-                                                                                setData('variants', v);
-                                                                            }}
-                                                                            className={`h-9 flex-1 text-sm bg-transparent ${variantError(index) ? 'border-destructive' : ''}`}
-                                                                        />
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="outline"
-                                                                            size="icon"
-                                                                            className="h-9 w-9 shrink-0"
-                                                                            title="Generate SKU"
-                                                                            onClick={() => {
-                                                                                const v = [...data.variants];
-                                                                                v[index].sku = 'SKU-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-                                                                                setData('variants', v);
-                                                                            }}
-                                                                        >
-                                                                            <RefreshCw className="h-3 w-3" />
-                                                                        </Button>
-                                                                    </div>
-                                                                    {variantError(index) && (
-                                                                        <p className="mt-1 text-[10px] text-destructive">{variantError(index)}</p>
-                                                                    )}
-                                                                </TableCell>
-                                                                <TableCell className="p-2 align-top text-center">
-                                                                    {(!variant.type || variant.type === 'color') ? (
-                                                                        <div className="flex items-center justify-center gap-1 w-full">
-                                                                            <label className="cursor-pointer group flex items-center justify-center w-10 h-10 border border-dashed rounded-md overflow-hidden relative bg-muted/10 hover:bg-muted/50 transition-colors shrink-0" title="Upload Variant Image — JPG, PNG, GIF or WebP. Max 20MB. Recommended size: 800x800px (1:1 square).">
-                                                                                <input 
-                                                                                    type="file" 
-                                                                                    className="hidden" 
-                                                                                    accept="image/*" 
-                                                                                    onChange={(e) => {
-                                                                                        if (e.target.files && e.target.files.length > 0) {
-                                                                                            const file = e.target.files[0];
-                                                                                            const v = [...data.variants];
-                                                                                            v[index].image = file;
-                                                                                            v[index]._localPreview = URL.createObjectURL(file);
-                                                                                            v[index].image_url = null;
-                                                                                            setData('variants', v);
-                                                                                        }
-                                                                                    }} 
-                                                                                />
-                                                                                {variant._localPreview || variant.image_url || variant.image_path ? (
-                                                                                    <img src={variant._localPreview || variant.image_url || variant.image_path} className="object-cover w-full h-full" alt="Variant Preview" />
-                                                                                ) : (
-                                                                                    <ImagePlus className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                                                                                )}
-                                                                            </label>
-                                                                            <Button
-                                                                                type="button"
-                                                                                variant="outline"
-                                                                                size="icon"
-                                                                                className="h-10 w-10 shrink-0"
-                                                                                title="Choose from Library"
-                                                                                onClick={() => {
-                                                                                    setVariantPickerIndex(index);
-                                                                                    setPickerOpen(true);
-                                                                                }}
-                                                                            >
-                                                                                <ImageIcon className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <span className="text-[10px] text-muted-foreground flex items-center justify-center h-10">N/A</span>
-                                                                    )}
-                                                                </TableCell>
-                                                                <TableCell className="p-2 align-top text-right">
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        className="h-9 w-9 shrink-0 text-destructive hover:text-destructive opacity-50 group-hover/row:opacity-100 transition-opacity"
-                                                                        onClick={() => setData('variants', data.variants.filter((_, i) => i !== index))}
-                                                                    >
-                                                                        <Trash2 className="h-4 w-4" />
-                                                                    </Button>
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        ))}
-                                                    </TableBody>
-                                                </Table>
-                                            </div>
-                                        </div>
-                                    )}
-                                </section>
-
-                                {/* ---- Image ---- */}
-                                <section className="space-y-3 border-t pt-5">
-                                    <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        Product Image
-                                    </h3>
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                                        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/40">
-                                            {data.image_url ? (
-                                                <div className="relative h-full w-full">
-                                                    <img
-                                                        src={data.image_url}
-                                                        alt="Selected"
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setData(
-                                                                'image_url',
-                                                                '',
-                                                            )
-                                                        }
-                                                        className="absolute top-1 right-1 rounded-full border bg-background p-0.5 shadow"
-                                                        aria-label="Remove selected image"
-                                                    >
-                                                        <X className="h-3.5 w-3.5" />
-                                                    </button>
-                                                </div>
-                                            ) : editingProduct?.images?.length >
-                                              0 ? (
-                                                <img
-                                                    src={
-                                                        editingProduct.images[0]
-                                                            .image_path
-                                                    }
-                                                    alt="Current"
-                                                    className="h-full w-full object-cover opacity-80"
-                                                />
-                                            ) : (
-                                                <ImageIcon className="h-7 w-7 text-muted-foreground" />
-                                            )}
-                                        </div>
-                                        <div className="flex-1 space-y-2">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <Input
-                                                    ref={imageInputRef}
-                                                    id="image"
-                                                    type="file"
-                                                    accept="image/*"
-                                                    className="h-10 flex-1"
-                                                    onChange={(e) => {
-                                                        setData(
-                                                            'image',
-                                                            e.target.files
-                                                                ? e.target
-                                                                      .files[0]
-                                                                : null,
-                                                        );
-
-                                                        if (
-                                                            e.target.files
-                                                                ?.length
-                                                        ) {
-                                                            setData(
-                                                                'image_url',
-                                                                '',
-                                                            );
-                                                        }
-                                                    }}
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    className="h-10"
-                                                    onClick={() => {
-                                                        setVariantPickerIndex(null);
-                                                        setPickerOpen(true);
-                                                    }}
-                                                >
-                                                    <ImagePlus className="mr-2 h-4 w-4" />{' '}
-                                                    Library
-                                                </Button>
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">
-                                                JPG, PNG or WebP — large images
-                                                are compressed automatically.<br/>
-                                                Max 20MB. Recommended size: 800x800px (1:1 square).
-                                                {editingProduct &&
-                                                    ' Leave empty to keep the current image.'}
-                                            </p>
-                                            {errors.image && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.image}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-
-                            <DialogFooter className="gap-2 border-t bg-muted/30 px-6 py-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => handleOpenChange(false)}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button type="submit" disabled={processing}>
-                                    {processing && (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    )}
-                                    {editingProduct
-                                        ? 'Update Product'
-                                        : 'Save Product'}
-                                </Button>
-                            </DialogFooter>
-                        </form>
-
-                        {/* Nested inside this dialog so Radix treats it as a child
-                            layer — a sibling dialog's clicks would dismiss this one. */}
-                        <MediaPicker
-                            open={pickerOpen}
-                            onOpenChange={setPickerOpen}
-                            onSelect={(m) => {
-                                if (variantPickerIndex !== null) {
-                                    const v = [...data.variants];
-                                    v[variantPickerIndex].image_url = m.url;
-                                    v[variantPickerIndex].image = null;
-                                    v[variantPickerIndex]._localPreview = null;
-                                    setData('variants', v);
-                                    setVariantPickerIndex(null);
-                                } else {
-                                    setData('image_url', m.url);
-                                    setData('image', null);
-
-                                    if (imageInputRef.current) {
-                                        imageInputRef.current.value = '';
-                                    }
-                                }
-                            }}
-                        />
-                    </DialogContent>
-                </Dialog>
+                <Button asChild>
+                    <Link href="/admin/products/create">
+                        <Plus className="mr-2 h-4 w-4" /> Add Product
+                    </Link>
+                </Button>
             </div>
 
             <Card>
@@ -1089,11 +320,11 @@ export default function ProductsIndex({
                                                 size="icon"
                                                 className="h-8 w-8"
                                                 title="Edit"
-                                                onClick={() =>
-                                                    handleEdit(product)
-                                                }
+                                                asChild
                                             >
-                                                <Pencil className="h-4 w-4" />
+                                                <Link href={`/admin/products/${product.id}/edit`}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Link>
                                             </Button>
                                             <Button
                                                 variant="ghost"
@@ -1156,8 +387,7 @@ export default function ProductsIndex({
                                     setPage((p) => Math.max(0, p - 1))
                                 }
                             >
-                                <ChevronLeft className="mr-1 h-4 w-4" />{' '}
-                                Previous
+                                <ChevronLeft className="mr-1 h-4 w-4" /> Previous
                             </Button>
                             <span className="px-2 text-sm text-muted-foreground">
                                 Page {Math.min(page + 1, lastPage + 1)} of{' '}
@@ -1302,13 +532,10 @@ export default function ProductsIndex({
                                         <Eye className="mr-2 h-4 w-4" /> View in Store
                                     </a>
                                 </Button>
-                                <Button
-                                    onClick={() => {
-                                        setViewingProduct(null);
-                                        handleEdit(viewingProduct);
-                                    }}
-                                >
-                                    <Pencil className="mr-2 h-4 w-4" /> Edit Product
+                                <Button asChild>
+                                    <Link href={`/admin/products/${viewingProduct.id}/edit`}>
+                                        <Pencil className="mr-2 h-4 w-4" /> Edit Product
+                                    </Link>
                                 </Button>
                             </DialogFooter>
                         </>
