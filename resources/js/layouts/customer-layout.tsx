@@ -685,7 +685,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                         <div className="col-span-1">
                             <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-foreground">Contact Us</h3>
                             <ul className="space-y-3 text-sm text-muted-foreground mb-8 break-words">
-                                {general_settings?.store_address && <li className="flex items-start gap-2"><MapPin className="h-4 w-4 mt-0.5 text-shop shrink-0" /> <span className="line-clamp-2">{general_settings.store_address}</span></li>}
+                                {general_settings?.store_address && <li className="flex items-start gap-2"><MapPin className="h-4 w-4 mt-0.5 text-shop shrink-0" /> <span>{general_settings.store_address}</span></li>}
                                 {general_settings?.store_phone && <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-shop shrink-0" /> {general_settings.store_phone}</li>}
                                 {general_settings?.store_email && <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-shop shrink-0" /> <span className="truncate">{general_settings.store_email}</span></li>}
                             </ul>
