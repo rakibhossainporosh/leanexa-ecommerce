@@ -27,7 +27,7 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
         logo_height_mobile: settings.logo_height_mobile || 32,
         theme_color: settings.theme_color || '#2b59ff',
         facebook_link: settings.facebook_link || '',
-        twitter_link: settings.twitter_link || '',
+        youtube_link: settings.youtube_link || '',
         instagram_link: settings.instagram_link || '',
         smtp_email: settings.smtp_email || '',
         smtp_password: settings.smtp_password || '',
@@ -432,15 +432,15 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
                                 {errors.instagram_link && <p className="text-destructive text-sm">{errors.instagram_link}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="twitter_link">Twitter URL</Label>
+                                <Label htmlFor="youtube_link">YouTube URL</Label>
                                 <Input
-                                    id="twitter_link"
+                                    id="youtube_link"
                                     type="url"
-                                    placeholder="https://twitter.com/..."
-                                    value={data.twitter_link}
-                                    onChange={(e) => setData('twitter_link', e.target.value)}
+                                    placeholder="https://youtube.com/..."
+                                    value={data.youtube_link}
+                                    onChange={(e) => setData('youtube_link', e.target.value)}
                                 />
-                                {errors.twitter_link && <p className="text-destructive text-sm">{errors.twitter_link}</p>}
+                                {errors.youtube_link && <p className="text-destructive text-sm">{errors.youtube_link}</p>}
                             </div>
                         </div>
                     </CardContent>

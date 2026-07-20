@@ -103,7 +103,7 @@ class Setting extends Model
             'logo_height_mobile' => '32',
             'theme_color' => '#2b59ff',
             'facebook_link' => '',
-            'twitter_link' => '',
+            'youtube_link' => '',
             'instagram_link' => '',
             'abandoned_cart_enabled' => false,
             'abandoned_cart_timeout_hours' => 24,

@@ -35,7 +35,7 @@ class GeneralSettingController extends Controller
             'logo_height_mobile' => 'nullable|numeric|min:10|max:150',
             'theme_color' => ['nullable', 'string', 'regex:/^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$/'],
             'facebook_link' => 'nullable|url|max:255',
-            'twitter_link' => 'nullable|url|max:255',
+            'youtube_link' => 'nullable|url|max:255',
             'instagram_link' => 'nullable|url|max:255',
             'smtp_email' => 'nullable|email|max:255',
             'smtp_password' => 'nullable|string|max:255',

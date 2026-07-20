@@ -72,7 +72,7 @@ class HandleInertiaRequests extends Middleware
             'general_settings' => \Illuminate\Support\Arr::only(\App\Models\Setting::general(), [
                 'store_name', 'store_email', 'store_phone', 'store_address',
                 'delivery_inside_dhaka', 'delivery_outside_dhaka', 'delivery_usa', 'tax_rate', 'shipping_details',
-                'logo_url', 'favicon_url', 'logo_height_desktop', 'logo_height_mobile', 'theme_color', 'facebook_link', 'twitter_link', 'instagram_link',
+                'logo_url', 'favicon_url', 'logo_height_desktop', 'logo_height_mobile', 'theme_color', 'facebook_link', 'youtube_link', 'instagram_link',
             ]),
             'categories' => \App\Models\Category::whereNull('parent_id')->with('children')->get(),
             'auth' => [

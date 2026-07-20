@@ -1,16 +1,28 @@
 import { Head, useForm, router, usePage } from '@inertiajs/react';
 import JoditEditor from 'jodit-react';
 
+// Paste rich content straight in as clean HTML — never pop the "keep as HTML /
+// insert as text" dialog, whose "as text" option escaped tags into &lt;p&gt;
+// that then showed up literally on the storefront.
+const pasteBehaviour = {
+    askBeforePasteHTML: false,
+    askBeforePasteFromWord: false,
+    defaultActionOnPaste: 'insert_clear_html' as const,
+    processPasteHTML: true,
+};
+
 const descriptionEditorConfig = {
     readonly: false,
     height: 300,
     placeholder: "Describe the product's features, materials and fit...",
+    ...pasteBehaviour,
 };
 
 const shortDescriptionEditorConfig = {
     readonly: false,
     height: 150,
     placeholder: 'A brief summary shown near the top of the product page...',
+    ...pasteBehaviour,
 };
 import {
     Plus,

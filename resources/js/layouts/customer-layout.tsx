@@ -10,7 +10,6 @@ import {
     Mail,
     MapPin,
     Facebook,
-    Twitter,
     Instagram,
     ChevronDown,
     Headphones,
@@ -151,16 +150,16 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                                 <Phone className="h-3.5 w-3.5 text-shop" /> {general_settings.store_phone}
                             </span>
                         )}
-                        {(general_settings?.facebook_link || general_settings?.twitter_link || general_settings?.instagram_link) && (
+                        {(general_settings?.facebook_link || general_settings?.youtube_link || general_settings?.instagram_link) && (
                             <span className="flex items-center gap-3">
                                 {general_settings?.facebook_link && (
                                     <a href={general_settings.facebook_link} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="text-muted-foreground transition-colors hover:text-shop">
                                         <Facebook className="h-3.5 w-3.5" />
                                     </a>
                                 )}
-                                {general_settings?.twitter_link && (
-                                    <a href={general_settings.twitter_link} target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="text-muted-foreground transition-colors hover:text-shop">
-                                        <Twitter className="h-3.5 w-3.5" />
+                                {general_settings?.youtube_link && (
+                                    <a href={general_settings.youtube_link} target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="text-muted-foreground transition-colors hover:text-shop">
+                                        <Youtube className="h-3.5 w-3.5" />
                                     </a>
                                 )}
                                 {general_settings?.instagram_link && (
@@ -702,12 +701,11 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                                         <Instagram className="h-4 w-4" />
                                     </a>
                                 )}
-                                <a href="#" className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-shop-primary hover:text-white">
-                                    <Youtube className="h-4 w-4" />
-                                </a>
-                                <a href="#" className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-shop-primary hover:text-white">
-                                    <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
-                                </a>
+                                {general_settings?.youtube_link && (
+                                    <a href={general_settings.youtube_link} className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-shop-primary hover:text-white">
+                                        <Youtube className="h-4 w-4" />
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>
