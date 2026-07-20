@@ -13,6 +13,7 @@ class PageSettingController extends Controller
     {
         return Inertia::render('admin/page-settings/index', [
             'pages' => Setting::pages(),
+            'customPages' => \App\Models\CustomPage::orderBy('sort_order')->orderBy('id')->get(),
         ]);
     }
 

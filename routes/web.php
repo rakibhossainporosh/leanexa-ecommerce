@@ -74,6 +74,13 @@ Route::get('/warranty-policy', function () {
     return inertia('info-page', ['title' => 'Warranty Policy', 'content' => \App\Models\Setting::pages()['warranty_policy']]); 
 })->name('warranty-policy');
 
+// Admin-created custom pages.
+Route::get('/page/{slug}', function (string $slug) {
+    $page = \App\Models\CustomPage::where('slug', $slug)->where('is_active', true)->firstOrFail();
+
+    return inertia('custom-page', ['title' => $page->title, 'content' => $page->content]);
+})->name('custom-page');
+
 Route::get('/track-order', [\App\Http\Controllers\TrackOrderController::class, 'index'])->name('track.order');
 
 Route::get('/search-suggestions', [\App\Http\Controllers\ProductController::class, 'suggestions'])->name('search.suggestions');
@@ -277,6 +284,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             // Page Settings
             Route::get('page-settings', [\App\Http\Controllers\Admin\PageSettingController::class, 'index'])->name('page-settings.index');
             Route::put('page-settings', [\App\Http\Controllers\Admin\PageSettingController::class, 'store'])->name('page-settings.update');
+            Route::resource('custom-pages', \App\Http\Controllers\Admin\CustomPageController::class)->only(['store', 'update', 'destroy']);
 
             // Media Library
             Route::get('media', [\App\Http\Controllers\Admin\MediaController::class, 'index'])->name('media.index');

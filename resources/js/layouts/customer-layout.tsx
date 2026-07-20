@@ -52,7 +52,7 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
     const { props } = usePage();
-    const { currencies, activeCurrency, general_settings, wishlistCount, cartCount = 0, auth, categories } = props as any;
+    const { currencies, activeCurrency, general_settings, wishlistCount, cartCount = 0, auth, categories, footerPages = [] } = props as any;
     // The homepage hero already renders the category list right under this
     // button, so the hover dropdown is only needed on every other page.
     const pageUrl = usePage().url;
@@ -653,6 +653,9 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                                 <li><Link href="/our-story" className="hover:text-shop transition-colors">Our Story</Link></li>
                                 <li><Link href="/returns-refunds" className="hover:text-shop transition-colors">Returns & Refunds</Link></li>
                                 <li><Link href="/faq" className="hover:text-shop transition-colors">FAQ</Link></li>
+                                {footerPages.filter((p: any) => (p.footer_section || 'company') === 'company').map((p: any) => (
+                                    <li key={p.slug}><Link href={`/page/${p.slug}`} className="hover:text-shop transition-colors">{p.title}</Link></li>
+                                ))}
                             </ul>
                         </div>
 
@@ -665,6 +668,9 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                                 <li><Link href="/products" className="hover:text-shop transition-colors">Best Sellers</Link></li>
                                 <li><Link href="/products" className="hover:text-shop transition-colors">Hot Deals</Link></li>
                                 <li><Link href="/brands" className="hover:text-shop transition-colors">Brands</Link></li>
+                                {footerPages.filter((p: any) => p.footer_section === 'shop').map((p: any) => (
+                                    <li key={p.slug}><Link href={`/page/${p.slug}`} className="hover:text-shop transition-colors">{p.title}</Link></li>
+                                ))}
                             </ul>
                         </div>
 
@@ -677,6 +683,9 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                                 <li><Link href="/shipping-policy" className="hover:text-shop transition-colors">Shipping Policy</Link></li>
                                 <li><Link href="/return-policy" className="hover:text-shop transition-colors">Return Policy</Link></li>
                                 <li><Link href="/warranty-policy" className="hover:text-shop transition-colors">Warranty Policy</Link></li>
+                                {footerPages.filter((p: any) => p.footer_section === 'information').map((p: any) => (
+                                    <li key={p.slug}><Link href={`/page/${p.slug}`} className="hover:text-shop transition-colors">{p.title}</Link></li>
+                                ))}
                             </ul>
                         </div>
 

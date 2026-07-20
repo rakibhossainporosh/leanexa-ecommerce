@@ -76,6 +76,11 @@ class HandleInertiaRequests extends Middleware
                 'order_prefix', 'invoice_prefix',
             ]),
             'categories' => \App\Models\Category::whereNull('parent_id')->with('children')->get(),
+            // Admin-created pages linked in the storefront footer.
+            'footerPages' => \App\Models\CustomPage::where('is_active', true)
+                ->where('show_in_footer', true)
+                ->orderBy('sort_order')->orderBy('id')
+                ->get(['title', 'slug', 'footer_section']),
             'auth' => [
                 'user' => $request->is('admin*')
                     ? (Auth::guard('admin')->check()

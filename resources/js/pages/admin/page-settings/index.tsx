@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router, Link } from '@inertiajs/react';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -31,9 +31,20 @@ interface PageSettingsProps {
         login_benefits: string[];
         faq: QA[];
     };
+    customPages: CustomPageRow[];
 }
 
-export default function PageSettingsIndex({ pages }: PageSettingsProps) {
+interface CustomPageRow {
+    id: number;
+    title: string;
+    slug: string;
+    content: string | null;
+    is_active: boolean;
+    show_in_footer: boolean;
+    footer_section: string;
+}
+
+export default function PageSettingsIndex({ pages, customPages = [] }: PageSettingsProps) {
     const { data, setData, put, processing, errors } = useForm({
         our_story: pages.our_story || '',
         returns_refunds: pages.returns_refunds || '',
@@ -104,6 +115,7 @@ export default function PageSettingsIndex({ pages }: PageSettingsProps) {
         { id: 'story', label: 'Our Story' },
         { id: 'policies', label: 'Policies' },
         { id: 'faq', label: 'FAQ' },
+        { id: 'pages', label: 'Custom Pages' },
     ] as const;
     const [activeTab, setActiveTab] = React.useState<(typeof TABS)[number]['id']>('auth');
 
@@ -118,7 +130,9 @@ export default function PageSettingsIndex({ pages }: PageSettingsProps) {
                         Manage the content of your static pages.
                     </p>
                 </div>
-                <Button onClick={submit} disabled={processing}>Save Changes</Button>
+                {activeTab !== 'pages' && (
+                    <Button onClick={submit} disabled={processing}>Save Changes</Button>
+                )}
             </div>
 
             {/* Tab bar — one Save button (top) submits every tab's fields. */}
@@ -370,10 +384,157 @@ export default function PageSettingsIndex({ pages }: PageSettingsProps) {
                 </Card>
                 )}
 
-                <div className="flex justify-end">
-                    <Button onClick={submit} disabled={processing} size="lg">Save All Changes</Button>
-                </div>
+                {activeTab !== 'pages' && (
+                    <div className="flex justify-end">
+                        <Button onClick={submit} disabled={processing} size="lg">Save All Changes</Button>
+                    </div>
+                )}
             </form>
+
+            {activeTab === 'pages' && <CustomPagesManager pages={customPages} config={config} />}
         </AdminLayout>
+    );
+}
+
+function CustomPagesManager({ pages, config }: { pages: CustomPageRow[]; config: any }) {
+    const emptyForm = { title: '', slug: '', content: '', is_active: true, show_in_footer: true, footer_section: 'company' };
+    const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm<typeof emptyForm>({ ...emptyForm });
+    const [editingId, setEditingId] = React.useState<number | null>(null);
+    const [showForm, setShowForm] = React.useState(false);
+
+    const startNew = () => {
+        setEditingId(null);
+        clearErrors();
+        setData({ ...emptyForm });
+        setShowForm(true);
+    };
+
+    const startEdit = (p: CustomPageRow) => {
+        setEditingId(p.id);
+        clearErrors();
+        setData({
+            title: p.title,
+            slug: p.slug,
+            content: p.content || '',
+            is_active: p.is_active,
+            show_in_footer: p.show_in_footer,
+            footer_section: p.footer_section || 'company',
+        });
+        setShowForm(true);
+    };
+
+    const save = () => {
+        const opts = {
+            preserveScroll: true,
+            onSuccess: () => {
+                reset();
+                setShowForm(false);
+                setEditingId(null);
+            },
+        };
+        if (editingId) {
+            put(`/admin/custom-pages/${editingId}`, opts);
+        } else {
+            post('/admin/custom-pages', opts);
+        }
+    };
+
+    const remove = (p: CustomPageRow) => {
+        if (confirm(`Delete the page "${p.title}"? This cannot be undone.`)) {
+            router.delete(`/admin/custom-pages/${p.id}`, { preserveScroll: true });
+        }
+    };
+
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Custom Pages</CardTitle>
+                    <CardDescription>Create extra pages (e.g. Careers, Wholesale) shown at /page/&#123;slug&#125; and optionally in the footer.</CardDescription>
+                </div>
+                {!showForm && (
+                    <Button type="button" variant="outline" size="sm" onClick={startNew} className="flex items-center gap-1">
+                        <Plus className="h-4 w-4" /> Add Page
+                    </Button>
+                )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {showForm && (
+                    <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
+                        <h3 className="text-sm font-semibold">{editingId ? 'Edit Page' : 'New Page'}</h3>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-2">
+                                <Label>Title</Label>
+                                <Input value={data.title} onChange={(e) => setData('title', e.target.value)} placeholder="e.g. Careers" />
+                                {errors.title && <p className="text-sm text-red-500">{errors.title}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Slug (optional)</Label>
+                                <Input value={data.slug} onChange={(e) => setData('slug', e.target.value)} placeholder="auto-generated from title" />
+                                {errors.slug && <p className="text-sm text-red-500">{errors.slug}</p>}
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Content</Label>
+                            <div className="rounded-md border">
+                                <JoditEditor value={data.content} config={config} onBlur={(c) => setData('content', c)} />
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-6">
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={data.is_active} onChange={(e) => setData('is_active', e.target.checked)} className="h-4 w-4" />
+                                Active (visible on storefront)
+                            </label>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={data.show_in_footer} onChange={(e) => setData('show_in_footer', e.target.checked)} className="h-4 w-4" />
+                                Show link in footer
+                            </label>
+                            {data.show_in_footer && (
+                                <div className="flex items-center gap-2 text-sm">
+                                    <Label className="text-sm">Footer section</Label>
+                                    <select
+                                        value={data.footer_section}
+                                        onChange={(e) => setData('footer_section', e.target.value)}
+                                        className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                                    >
+                                        <option value="company">Company</option>
+                                        <option value="shop">Shop</option>
+                                        <option value="information">Information</option>
+                                    </select>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditingId(null); reset(); }}>Cancel</Button>
+                            <Button type="button" onClick={save} disabled={processing}>{editingId ? 'Update Page' : 'Create Page'}</Button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="divide-y rounded-lg border">
+                    {pages.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between gap-3 p-3">
+                            <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-medium">{p.title}</span>
+                                    {!p.is_active && <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">Hidden</span>}
+                                    {p.show_in_footer && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary capitalize">Footer: {p.footer_section || 'company'}</span>}
+                                </div>
+                                <Link href={`/page/${p.slug}`} target="_blank" className="text-xs text-muted-foreground hover:underline">/page/{p.slug}</Link>
+                            </div>
+                            <div className="flex shrink-0 gap-1">
+                                <Button type="button" variant="ghost" size="sm" onClick={() => startEdit(p)}>Edit</Button>
+                                <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => remove(p)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+                    {pages.length === 0 && (
+                        <p className="p-6 text-center text-sm text-muted-foreground">No custom pages yet. Click "Add Page" to create one.</p>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
     );
 }
