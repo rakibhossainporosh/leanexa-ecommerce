@@ -1,8 +1,11 @@
+@php
+    $invoiceNumber = (\App\Models\Setting::general()['invoice_prefix'] ?? 'INV') . '-' . (explode('-', $invoice->uuid)[0] ?? $invoice->uuid);
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Invoice {{ explode('-', $invoice->uuid)[0] ?? $invoice->uuid }}</title>
+    <title>Invoice {{ $invoiceNumber }}</title>
     <style>
         /* DomPDF compatible CSS */
         @page { margin: 0; }
@@ -196,7 +199,7 @@
                     <table class="meta-table">
                         <tr>
                             <td class="meta-label">Invoice No:</td>
-                            <td class="meta-value">#{{ explode('-', $invoice->uuid)[0] ?? $invoice->uuid }}</td>
+                            <td class="meta-value">#{{ $invoiceNumber }}</td>
                         </tr>
                         <tr>
                             <td class="meta-label">Date Issued:</td>

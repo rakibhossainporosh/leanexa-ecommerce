@@ -74,7 +74,7 @@ class CheckoutService
 
             $order = Order::create([
                 'customer_id' => $customer->id,
-                'order_number' => 'ORD-' . strtoupper(Str::random(12)),
+                'order_number' => (strtoupper($settings['order_prefix'] ?? 'ORD') ?: 'ORD') . '-' . strtoupper(Str::random(12)),
                 'status' => 'pending',
                 'payment_status' => 'unpaid',
                 'subtotal' => $subtotal,

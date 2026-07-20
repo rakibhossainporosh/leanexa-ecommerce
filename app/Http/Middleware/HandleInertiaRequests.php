@@ -73,6 +73,7 @@ class HandleInertiaRequests extends Middleware
                 'store_name', 'store_email', 'store_phone', 'store_address',
                 'delivery_inside_dhaka', 'delivery_outside_dhaka', 'delivery_usa', 'tax_rate', 'shipping_details',
                 'logo_url', 'favicon_url', 'logo_height_desktop', 'logo_height_mobile', 'theme_color', 'facebook_link', 'youtube_link', 'instagram_link',
+                'order_prefix', 'invoice_prefix',
             ]),
             'categories' => \App\Models\Category::whereNull('parent_id')->with('children')->get(),
             'auth' => [

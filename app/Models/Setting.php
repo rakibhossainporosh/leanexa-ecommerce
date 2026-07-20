@@ -110,6 +110,8 @@ class Setting extends Model
             'abandoned_cart_discount_type' => 'none',
             'abandoned_cart_discount_value' => 0,
             'admin_notification_emails' => '',
+            'order_prefix' => 'ORD',
+            'invoice_prefix' => 'INV',
             'shipping_details' => "Standard Delivery:\nOrders within Bangladesh are typically delivered within 24 to 48 hours.\n\nInternational Shipping:\nFor international orders, please allow 7-10 business days for delivery depending on the destination.\n\nNote: Shipping times may vary during public holidays and peak seasons.",
         ];
     }

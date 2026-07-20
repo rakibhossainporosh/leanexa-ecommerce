@@ -21,7 +21,9 @@ const statusLabel = (status: string) => {
 export default function InvoiceShow({ invoice, currencySymbol }: { invoice: any, currencySymbol: string }) {
     const props = usePage().props as any;
     const { flash = {}, general_settings } = props;
-    
+
+    const invoiceNumber = `${general_settings?.invoice_prefix || 'INV'}-${invoice.uuid.split('-')[0].toUpperCase()}`;
+
     const formatMoney = (amount: number | string) => {
         const num = Number(amount) || 0;
         return `${currencySymbol}${num.toFixed(2)}`;
@@ -50,7 +52,7 @@ export default function InvoiceShow({ invoice, currencySymbol }: { invoice: any,
 
     return (
         <div className="bg-slate-50/80 dark:bg-zinc-950 min-h-screen py-10 px-4 sm:px-6 flex flex-col items-center">
-            <Head title={`Invoice #${invoice.uuid.split('-')[0].toUpperCase()}`} />
+            <Head title={`Invoice #${invoiceNumber}`} />
 
             <div className="w-full max-w-3xl space-y-4">
                 {flash.success && (
@@ -117,7 +119,7 @@ export default function InvoiceShow({ invoice, currencySymbol }: { invoice: any,
                                 <h1 className="text-2xl font-light tracking-tight text-slate-900 dark:text-white uppercase mb-2">Invoice</h1>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                                     <span className="text-slate-500 dark:text-slate-400 md:text-right">Invoice No:</span>
-                                    <span className="font-medium text-slate-900 dark:text-slate-200">#{invoice.uuid.split('-')[0].toUpperCase()}</span>
+                                    <span className="font-medium text-slate-900 dark:text-slate-200">#{invoiceNumber}</span>
                                     
                                     <span className="text-slate-500 dark:text-slate-400 md:text-right">Date Issued:</span>
                                     <span className="font-medium text-slate-900 dark:text-slate-200">{new Date(invoice.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>

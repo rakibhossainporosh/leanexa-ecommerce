@@ -17,7 +17,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function CustomerShow({ customer, stats }: { customer: any; stats: any }) {
     const handleDelete = () => {
-        if (confirm(`Delete ${customer.name}? This permanently removes the customer and cannot be undone.`)) {
+        if (confirm(`Delete ${customer.name}?\n\nThis also permanently deletes ALL of their orders (and removes that revenue from the Sales Report), along with their cart and wishlist. This cannot be undone.`)) {
             router.delete(`/admin/customers/${customer.id}`);
         }
     };

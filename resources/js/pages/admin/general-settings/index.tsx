@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Mail, Palette, Share2, ShoppingCart, Store, Truck } from 'lucide-react';
+import { Hash, Mail, Palette, Share2, ShoppingCart, Store, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function GeneralSettingsIndex({ settings }: { settings: any }) {
@@ -35,6 +35,8 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
         official_smtp_password: settings.official_smtp_password || '',
         primary_mailer: settings.primary_mailer || 'gmail',
         admin_notification_emails: settings.admin_notification_emails || '',
+        order_prefix: settings.order_prefix || 'ORD',
+        invoice_prefix: settings.invoice_prefix || 'INV',
         abandoned_cart_enabled: settings.abandoned_cart_enabled ?? false,
         abandoned_cart_timeout_hours: settings.abandoned_cart_timeout_hours || 24,
         abandoned_cart_discount_type: settings.abandoned_cart_discount_type || 'none',
@@ -442,6 +444,43 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
                                 />
                                 {errors.youtube_link && <p className="text-destructive text-sm">{errors.youtube_link}</p>}
                             </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Order & Invoice Numbering */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Hash className="h-4 w-4 text-muted-foreground" />
+                            Order &amp; Invoice Numbering
+                        </CardTitle>
+                        <CardDescription>Set the prefix used in new order numbers and invoice numbers (letters/numbers only, max 6 characters).</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="order_prefix">Order Number Prefix</Label>
+                            <Input
+                                id="order_prefix"
+                                maxLength={6}
+                                value={data.order_prefix}
+                                onChange={(e) => setData('order_prefix', e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase())}
+                                placeholder="ORD"
+                            />
+                            <p className="text-muted-foreground text-xs">Example: {(data.order_prefix || 'ORD')}-A1B2C3D4E5F6</p>
+                            {errors.order_prefix && <p className="text-destructive text-sm">{errors.order_prefix}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="invoice_prefix">Invoice Number Prefix</Label>
+                            <Input
+                                id="invoice_prefix"
+                                maxLength={6}
+                                value={data.invoice_prefix}
+                                onChange={(e) => setData('invoice_prefix', e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase())}
+                                placeholder="INV"
+                            />
+                            <p className="text-muted-foreground text-xs">Example: #{(data.invoice_prefix || 'INV')}-12AAC787</p>
+                            {errors.invoice_prefix && <p className="text-destructive text-sm">{errors.invoice_prefix}</p>}
                         </div>
                     </CardContent>
                 </Card>

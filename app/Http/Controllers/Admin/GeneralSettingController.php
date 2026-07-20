@@ -43,6 +43,10 @@ class GeneralSettingController extends Controller
             'official_smtp_password' => 'nullable|string|max:255',
             'primary_mailer' => 'nullable|string|in:gmail,hostinger',
             'admin_notification_emails' => 'nullable|string|max:2000',
+            // Alphanumeric prefixes, max 6 chars — they land in order numbers and
+            // gateway transaction ids, so keep them URL/gateway safe.
+            'order_prefix' => ['nullable', 'string', 'max:6', 'regex:/^[A-Za-z0-9]+$/'],
+            'invoice_prefix' => ['nullable', 'string', 'max:6', 'regex:/^[A-Za-z0-9]+$/'],
             'abandoned_cart_enabled' => 'boolean',
             'abandoned_cart_timeout_hours' => 'required|integer|min:0',
             'abandoned_cart_discount_type' => 'required|string|in:none,percentage,fixed',
@@ -82,6 +86,18 @@ class GeneralSettingController extends Controller
         
         unset($validated['logo']);
         unset($validated['favicon']);
+
+        // Normalise prefixes to uppercase, falling back to the defaults when blank.
+        $validated['order_prefix'] = strtoupper($validated['order_prefix'] ?? '') ?: 'ORD';
+        $validated['invoice_prefix'] = strtoupper($validated['invoice_prefix'] ?? '') ?: 'INV';
+
+        // "INV" is the reserved marker the payment callback uses to tell invoice
+        // payments from order payments, so an order prefix of INV would misroute.
+        if ($validated['order_prefix'] === 'INV') {
+            return back()
+                ->withErrors(['order_prefix' => 'The order prefix "INV" is reserved for invoices. Please choose another.'])
+                ->withInput();
+        }
 
         Setting::set('general_settings', $validated);
 
