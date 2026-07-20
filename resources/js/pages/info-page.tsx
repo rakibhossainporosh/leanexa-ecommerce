@@ -22,9 +22,9 @@ export default function InfoPage({ title, content }: { title: string; content?: 
                 </Breadcrumb>
 
                 <div className="rounded-xl border border-border bg-card p-6 shadow-sm md:p-8 lg:p-12">
-                    <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground md:text-4xl mb-8">{title}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl mb-8">{title}</h1>
                     <div
-                        className="prose prose-neutral max-w-none dark:prose-invert prose-headings:font-heading"
+                        className="prose prose-sm md:prose-base max-w-none dark:prose-invert text-muted-foreground"
                         dangerouslySetInnerHTML={{ __html: content || 'Content coming soon...' }}
                     />
                 </div>

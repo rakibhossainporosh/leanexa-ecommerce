@@ -38,6 +38,7 @@ createInertiaApp({
             case name === 'returns-refunds':
             case name === 'faq':
             case name === 'info-page':
+            case name === 'custom-page':
             case name.startsWith('checkout/'):
             case name.startsWith('invoice/'):
             case name.startsWith('account/'):
