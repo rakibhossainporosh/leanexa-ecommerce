@@ -254,7 +254,7 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
                                 {errors.delivery_outside_dhaka && <p className="text-destructive text-sm">{errors.delivery_outside_dhaka}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="delivery_usa">USA Charge (৳)</Label>
+                                <Label htmlFor="delivery_usa">USA/International Charge ($)</Label>
                                 <Input
                                     id="delivery_usa"
                                     type="number"

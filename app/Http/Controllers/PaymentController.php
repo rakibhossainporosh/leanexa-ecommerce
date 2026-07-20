@@ -55,7 +55,7 @@ class PaymentController extends Controller
                 return ['order' => $order, 'just_paid' => false];
             }
 
-            if (! $this->amountMatches($validation, $order->total_amount, $order->currency)) {
+            if (! $this->orderAmountMatches($validation, $order)) {
                 Log::warning('Payment amount/currency mismatch', [
                     'order' => $order->order_number,
                     'expected' => $order->total_amount,
@@ -179,6 +179,39 @@ class PaymentController extends Controller
      * SSLCommerz returns the settled amount in the store currency. Guard against
      * tampering by requiring the amount and currency to match what we stored.
      */
+    /**
+     * Verify an order payment. An order's total_amount is stored in the store's
+     * DEFAULT currency, while the gateway was charged in the currency the
+     * customer selected (session currency). SSLCommerz reports currency_amount
+     * in that same processed currency, so we convert the order total into that
+     * currency using the store's own rates and compare — this is correct whether
+     * the customer paid in BDT or USD, and whatever the store's default is.
+     */
+    private function orderAmountMatches(array $validation, \App\Models\Order $order): bool
+    {
+        $parseAmount = function ($val) {
+            if (is_string($val)) {
+                $val = str_replace(',', '', $val);
+            }
+            return (float) $val;
+        };
+
+        $currencyAmount = $parseAmount($validation['currency_amount'] ?? $validation['amount'] ?? -1);
+        $gatewayCurrency = $validation['currency_type'] ?? $validation['currency'] ?? 'BDT';
+
+        $currencies = \App\Models\Currency::where('is_active', true)->get();
+        $defaultRate = (float) ($currencies->firstWhere('is_default', true)->exchange_rate ?? 1);
+        $gatewayRate = (float) ($currencies->firstWhere('code', $gatewayCurrency)->exchange_rate ?? $defaultRate);
+
+        // total_amount (default currency) -> the gateway's processed currency.
+        $expected = $defaultRate > 0
+            ? ((float) $order->total_amount / $defaultRate) * $gatewayRate
+            : (float) $order->total_amount;
+
+        // Allow a small tolerance for gateway-side rounding.
+        return abs($currencyAmount - $expected) <= max(2.0, $expected * 0.02);
+    }
+
     private function amountMatches(array $validation, $expectedAmount, ?string $expectedCurrency): bool
     {
         $parseAmount = function($val) {
