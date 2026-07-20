@@ -50,7 +50,7 @@ class CheckoutController extends Controller
             'phone' => 'nullable|string|max:30',
             'shipping_address' => 'required|string|max:1000',
             'billing_address' => 'nullable|string|max:1000',
-            'country' => 'required|in:BD,US',
+            'country' => 'required|in:BD,US,OTHER',
             'delivery_area' => 'nullable|in:inside_dhaka,outside_dhaka',
             'notes' => 'nullable|string|max:2000',
         ]);

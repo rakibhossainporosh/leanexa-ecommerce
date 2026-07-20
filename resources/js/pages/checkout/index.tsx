@@ -1,4 +1,4 @@
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import CustomerLayout from '@/layouts/customer-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Ticket } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useCurrency } from '@/hooks/use-currency';
 
 // Customers shopping in USD are shipping to the USA; everyone else defaults to Bangladesh.
@@ -38,13 +38,32 @@ export default function CheckoutIndex({ cart, auth, appliedCoupon, shipping, tax
         notes: '',
     });
 
+    // Track the latest chosen country so the currency->country sync below can
+    // read it without re-running every time it changes.
+    const countryRef = useRef(data.country);
+    countryRef.current = data.country;
+
     // The top bar can change currency without remounting this page, so keep the
-    // shipping country in step with it.
+    // shipping country in step with it — but don't downgrade a manual "Other
+    // Country" pick to USA just because both bill in USD.
     useEffect(() => {
-        setData('country', countryForCurrency(activeCurrency?.code));
+        if (activeCurrency?.code === 'USD') {
+            if (countryRef.current !== 'US' && countryRef.current !== 'OTHER') {
+                setData('country', 'US');
+            }
+        } else {
+            setData('country', 'BD');
+        }
     }, [activeCurrency?.code]);
 
-    const shippingAmount = data.country === 'US'
+    // Selecting a country drives the display currency: Bangladesh -> BDT,
+    // USA and Other Country -> USD (both settle internationally in USD).
+    const handleCountryChange = (value: string) => {
+        setData('country', value);
+        router.post('/currency', { currency: value === 'BD' ? 'BDT' : 'USD' }, { preserveScroll: true, preserveState: true });
+    };
+
+    const shippingAmount = (data.country === 'US' || data.country === 'OTHER')
         ? (shipping?.usa ?? 0)
         : data.delivery_area === 'outside_dhaka'
             ? (shipping?.outside_dhaka ?? 0)
@@ -133,11 +152,12 @@ export default function CheckoutIndex({ cart, auth, appliedCoupon, shipping, tax
                                 <select 
                                     id="country" 
                                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                    value={data.country} 
-                                    onChange={e => setData('country', e.target.value)}
+                                    value={data.country}
+                                    onChange={e => handleCountryChange(e.target.value)}
                                 >
                                     <option value="BD">Bangladesh</option>
                                     <option value="US">USA</option>
+                                    <option value="OTHER">Other Country</option>
                                 </select>
                                 {errors.country && <div className="text-destructive text-sm mt-1">{errors.country}</div>}
                             </div>
@@ -159,11 +179,11 @@ export default function CheckoutIndex({ cart, auth, appliedCoupon, shipping, tax
                                 </div>
                             )}
 
-                            {data.country === 'US' && (
+                            {(data.country === 'US' || data.country === 'OTHER') && (
                                 <div>
                                     <Label>Delivery Area</Label>
                                     <div className="mt-2 flex items-center justify-between rounded-md border px-3 py-2">
-                                        <span className="text-sm">International Shipping (USA)</span>
+                                        <span className="text-sm">International Shipping ({data.country === 'US' ? 'USA' : 'Other Country'})</span>
                                         <span className="text-sm font-medium">{formatPrice(shipping?.usa ?? 0)}</span>
                                     </div>
                                 </div>

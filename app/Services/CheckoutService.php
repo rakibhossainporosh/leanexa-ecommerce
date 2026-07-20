@@ -85,7 +85,11 @@ class CheckoutService
                 'coupon_id' => $coupon?->id,
                 'coupon_applied' => false,
                 'currency' => 'BDT',
-                'shipping_address' => ($data['shipping_address'] ?? '') . ($data['country'] === 'US' ? ', USA' : ', Bangladesh'),
+                'shipping_address' => ($data['shipping_address'] ?? '') . match ($data['country']) {
+                    'US' => ', USA',
+                    'OTHER' => ', International',
+                    default => ', Bangladesh',
+                },
                 'billing_address' => $data['billing_address'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
@@ -177,7 +181,8 @@ class CheckoutService
 
     private function shippingAmount(array $data, array $settings): float
     {
-        if (($data['country'] ?? '') === 'US') {
+        // USA and every other non-Bangladesh country ship at the international rate.
+        if (in_array(($data['country'] ?? ''), ['US', 'OTHER'], true)) {
             return (float) ($settings['delivery_usa'] ?? 0);
         }
 
