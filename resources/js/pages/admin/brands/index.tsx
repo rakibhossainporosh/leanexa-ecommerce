@@ -10,26 +10,44 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useState } from 'react';
-import { Plus, Trash2, Pencil, Award, ExternalLink } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Plus, Trash2, Pencil, Award, ExternalLink, X } from 'lucide-react';
 
 export default function BrandsIndex({ brands }: { brands: any[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [editingBrand, setEditingBrand] = useState<any>(null);
 
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
+    const { data, setData, post, processing, errors, clearErrors } = useForm({
         name: '',
         description: '',
         website: '',
         is_active: true,
         logo: null as File | null,
+        remove_logo: false,
+        _method: 'post',
+    });
+
+    // Preview: a freshly picked file, else the brand's existing logo (unless cleared).
+    const newLogoPreview = useMemo(() => (data.logo ? URL.createObjectURL(data.logo) : null), [data.logo]);
+    const existingLogo = editingBrand && !data.remove_logo ? editingBrand.logo_url : null;
+    const logoPreview = newLogoPreview || existingLogo;
+
+    // reset() restores Inertia's "defaults", which become the last submitted
+    // values after a successful save — so "Add Brand" would show the brand just
+    // edited. Always start from an explicit blank state instead.
+    const blankBrand = () => setData({
+        name: '',
+        description: '',
+        website: '',
+        is_active: true,
+        logo: null,
+        remove_logo: false,
         _method: 'post',
     });
 
     const openCreateModal = () => {
         setEditingBrand(null);
-        reset();
-        setData('_method', 'post');
+        blankBrand();
         clearErrors();
         setIsOpen(true);
     };
@@ -42,6 +60,7 @@ export default function BrandsIndex({ brands }: { brands: any[] }) {
             website: brand.website || '',
             is_active: brand.is_active,
             logo: null,
+            remove_logo: false,
             _method: 'put',
         });
         clearErrors();
@@ -82,7 +101,11 @@ export default function BrandsIndex({ brands }: { brands: any[] }) {
                     open={isOpen}
                     onOpenChange={(open) => {
                         setIsOpen(open);
-                        if (!open) reset();
+                        if (!open) {
+                            setEditingBrand(null);
+                            blankBrand();
+                            clearErrors();
+                        }
                     }}
                 >
                     <DialogTrigger asChild>
@@ -102,8 +125,34 @@ export default function BrandsIndex({ brands }: { brands: any[] }) {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="logo">Brand Logo (Optional)</Label>
-                                <Input id="logo" type="file" accept="image/*" onChange={(e) => setData('logo', e.target.files ? e.target.files[0] : null)} />
-                                <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP or SVG. Max 2MB. Recommended size: 400x300px (4:3).</p>
+                                <div className="flex items-start gap-3">
+                                    {logoPreview && (
+                                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-muted">
+                                            <img src={logoPreview} alt="Logo preview" className="h-full w-full object-contain" />
+                                            <button
+                                                type="button"
+                                                title="Remove logo"
+                                                className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                                onClick={() => {
+                                                    setData((prev: any) => ({ ...prev, logo: null, remove_logo: true }));
+                                                    const el = document.getElementById('logo') as HTMLInputElement | null;
+                                                    if (el) el.value = '';
+                                                }}
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    )}
+                                    <div className="flex-1">
+                                        <Input
+                                            id="logo"
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setData((prev: any) => ({ ...prev, logo: e.target.files ? e.target.files[0] : null, remove_logo: false }))}
+                                        />
+                                        <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP or SVG. Max 2MB. Recommended size: 400x300px (4:3).</p>
+                                    </div>
+                                </div>
                                 {errors.logo && <p className="text-destructive text-sm">{errors.logo}</p>}
                             </div>
                             <div className="space-y-2">

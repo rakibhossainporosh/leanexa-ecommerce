@@ -53,6 +53,7 @@ class BrandController extends Controller
             'website' => 'nullable|url|max:255',
             'is_active' => 'boolean',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
+            'remove_logo' => 'boolean',
         ]);
 
         $brand = Brand::findOrFail($id);
@@ -64,9 +65,14 @@ class BrandController extends Controller
             }
             $path = $request->file('logo')->store('brands', 'public');
             $validated['logo_url'] = '/storage/' . $path;
+        } elseif ($request->boolean('remove_logo') && $brand->logo_url) {
+            // Admin cleared the existing logo without uploading a new one.
+            $oldPath = str_replace('/storage/', '', $brand->logo_url);
+            Storage::disk('public')->delete($oldPath);
+            $validated['logo_url'] = null;
         }
 
-        unset($validated['logo']);
+        unset($validated['logo'], $validated['remove_logo']);
 
         $this->brandService->updateBrand($id, $validated);
 
