@@ -733,7 +733,6 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                                     .replace('{year}', String(new Date().getFullYear()))
                                     .replace('{store}', general_settings?.store_name || 'Elevate & Next')}
                             </p>
-                            <p>Designed & Developed by <a href="https://onetech.com.bd" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-foreground transition-colors">ONETECH</a></p>
                         </div>
                     </div>
                 </div>

@@ -115,18 +115,6 @@ export default function AdminLogin({ status }: Props) {
                         </Button>
                     </form>
                 </div>
-
-                <p className="mt-6 text-center text-xs text-slate-400">
-                    Designed &amp; Developed by{' '}
-                    <a
-                        href="https://onetech.com.bd"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="transition-colors hover:text-slate-600 hover:underline"
-                    >
-                        ONETECH
-                    </a>
-                </p>
             </div>
         </div>
     );
