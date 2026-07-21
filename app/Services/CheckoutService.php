@@ -186,8 +186,10 @@ class CheckoutService
             return (float) ($settings['delivery_usa'] ?? 0);
         }
 
-        $inside = (float) ($settings['delivery_inside_dhaka'] ?? 0);
-        $outside = (float) ($settings['delivery_outside_dhaka'] ?? 0);
+        // Inside/Outside Dhaka charges are always entered in BDT, so convert them
+        // to the store's default currency (order totals are stored that way).
+        $inside = $this->bdtToDefault((float) ($settings['delivery_inside_dhaka'] ?? 0));
+        $outside = $this->bdtToDefault((float) ($settings['delivery_outside_dhaka'] ?? 0));
 
         $area = $data['delivery_area'] ?? null;
         if ($area === 'inside_dhaka') {
@@ -199,6 +201,19 @@ class CheckoutService
 
         // Default to the higher (outside) rate when the area is unspecified.
         return max($inside, $outside);
+    }
+
+    /**
+     * Convert a BDT amount into the store's default currency using the configured
+     * exchange rates. On a BDT-default store this is a no-op.
+     */
+    public function bdtToDefault(float $amount): float
+    {
+        $currencies = \App\Models\Currency::where('is_active', true)->get();
+        $defaultRate = (float) ($currencies->firstWhere('is_default', true)->exchange_rate ?? 1);
+        $bdtRate = (float) ($currencies->firstWhere('code', 'BDT')->exchange_rate ?? $defaultRate);
+
+        return $bdtRate > 0 ? round(($amount / $bdtRate) * $defaultRate, 2) : $amount;
     }
 
     /**

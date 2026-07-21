@@ -34,8 +34,10 @@ class CheckoutController extends Controller
             'cart' => $cart->load('items.product.images'),
             'appliedCoupon' => $appliedCoupon,
             'shipping' => [
-                'inside_dhaka' => (float) ($settings['delivery_inside_dhaka'] ?? 0),
-                'outside_dhaka' => (float) ($settings['delivery_outside_dhaka'] ?? 0),
+                // Inside/Outside Dhaka charges are entered in BDT; convert to the
+                // default currency so the checkout re-prices them like everything else.
+                'inside_dhaka' => $this->checkoutService->bdtToDefault((float) ($settings['delivery_inside_dhaka'] ?? 0)),
+                'outside_dhaka' => $this->checkoutService->bdtToDefault((float) ($settings['delivery_outside_dhaka'] ?? 0)),
                 'usa' => (float) ($settings['delivery_usa'] ?? 0),
             ],
             'taxRate' => (float) ($settings['tax_rate'] ?? 0),
