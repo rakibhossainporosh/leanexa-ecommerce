@@ -728,7 +728,11 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                         </div>
 
                         <div className="flex w-full flex-col items-center gap-1 text-center sm:flex-row sm:justify-between sm:gap-4 sm:text-left">
-                            <p>&copy; 2026 {general_settings?.store_name || 'Elevate & Next'}. All Rights Reserved.</p>
+                            <p>
+                                {(general_settings?.footer_copyright || '© {year} {store}. All Rights Reserved.')
+                                    .replace('{year}', String(new Date().getFullYear()))
+                                    .replace('{store}', general_settings?.store_name || 'Elevate & Next')}
+                            </p>
                             <p>Designed & Developed by <a href="https://onetech.com.bd" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-foreground transition-colors">ONETECH</a></p>
                         </div>
                     </div>

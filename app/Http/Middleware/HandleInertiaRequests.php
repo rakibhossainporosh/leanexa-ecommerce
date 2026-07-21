@@ -70,7 +70,7 @@ class HandleInertiaRequests extends Middleware
             'userCountry' => $userCountry,
             // Only public-facing keys: never leak credentials (e.g. SMTP) here.
             'general_settings' => \Illuminate\Support\Arr::only(\App\Models\Setting::general(), [
-                'store_name', 'store_email', 'store_phone', 'store_address', 'footer_description',
+                'store_name', 'store_email', 'store_phone', 'store_address', 'footer_description', 'footer_copyright',
                 'delivery_inside_dhaka', 'delivery_outside_dhaka', 'delivery_usa', 'tax_rate', 'shipping_details',
                 'logo_url', 'favicon_url', 'logo_height_desktop', 'logo_height_mobile', 'theme_color', 'facebook_link', 'youtube_link', 'instagram_link',
                 'order_prefix', 'invoice_prefix',

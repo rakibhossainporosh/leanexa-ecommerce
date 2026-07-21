@@ -18,6 +18,7 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
         store_phone: settings.store_phone || '',
         store_address: settings.store_address || '',
         footer_description: settings.footer_description || '',
+        footer_copyright: settings.footer_copyright || '',
         delivery_inside_dhaka: settings.delivery_inside_dhaka || 0,
         delivery_outside_dhaka: settings.delivery_outside_dhaka || 0,
         delivery_usa: settings.delivery_usa || 0,
@@ -127,6 +128,18 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
                                 placeholder="Your one-stop shop for..."
                             />
                             {errors.footer_description && <p className="text-destructive text-sm">{errors.footer_description}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="footer_copyright">Footer Copyright</Label>
+                            <p className="text-muted-foreground text-xs">Use {'{year}'} for the current year and {'{store}'} for the store name.</p>
+                            <Input
+                                id="footer_copyright"
+                                value={data.footer_copyright}
+                                onChange={(e) => setData('footer_copyright', e.target.value)}
+                                placeholder="© {year} {store}. All Rights Reserved."
+                            />
+                            {errors.footer_copyright && <p className="text-destructive text-sm">{errors.footer_copyright}</p>}
                         </div>
                     </CardContent>
                 </Card>

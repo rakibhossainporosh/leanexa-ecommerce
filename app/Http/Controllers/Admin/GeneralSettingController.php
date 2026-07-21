@@ -25,6 +25,7 @@ class GeneralSettingController extends Controller
             'store_phone' => 'nullable|string|max:50',
             'store_address' => 'nullable|string|max:1000',
             'footer_description' => 'nullable|string|max:500',
+            'footer_copyright' => 'nullable|string|max:255',
             'delivery_inside_dhaka' => 'required|numeric|min:0',
             'delivery_outside_dhaka' => 'required|numeric|min:0',
             'delivery_usa' => 'nullable|numeric|min:0',

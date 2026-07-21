@@ -95,6 +95,7 @@ class Setting extends Model
             'store_phone' => '+880 1234 567890',
             'store_address' => 'Dhaka, Bangladesh',
             'footer_description' => 'Your one-stop shop for premium electronics, gadgets and accessories — delivered fast, right to your door.',
+            'footer_copyright' => '© {year} {store}. All Rights Reserved.',
             'delivery_inside_dhaka' => 60,
             'delivery_outside_dhaka' => 120,
             'delivery_usa' => 0,

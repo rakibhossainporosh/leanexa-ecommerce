@@ -66,6 +66,9 @@ Route::get('/contact', function () {
         ],
     ]);
 })->name('contact');
+
+Route::post('/contact/message', [\App\Http\Controllers\ContactController::class, 'store'])
+    ->middleware('throttle:10,1')->name('contact.store');
 Route::get('/our-story', function () { 
     return inertia('our-story', ['page_data' => \App\Models\Setting::pages()['our_story']]); 
 })->name('our-story');
@@ -206,6 +209,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('products-data', [\App\Http\Controllers\Admin\ProductController::class, 'data'])->name('products.data');
             Route::resource('products', \App\Http\Controllers\Admin\ProductController::class)->except(['show']);
             Route::resource('currencies', \App\Http\Controllers\Admin\CurrencyController::class)->except(['create', 'show', 'edit']);
+            Route::resource('messages', \App\Http\Controllers\Admin\ContactMessageController::class)->only(['index', 'update', 'destroy']);
             Route::get('customers-data', [\App\Http\Controllers\Admin\CustomerController::class, 'data'])->name('customers.data');
             Route::resource('customers', \App\Http\Controllers\Admin\CustomerController::class)->only(['index', 'show', 'destroy']);
             Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->only(['index', 'store', 'update', 'destroy']);

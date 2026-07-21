@@ -1,11 +1,25 @@
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import CustomerLayout from '@/layouts/customer-layout';
 import { Mail, MapPin, Phone } from 'lucide-react';
+import { toast } from 'sonner';
 
 type ContactInfo = { subtitle?: string; location?: string; phone?: string; email?: string };
 
 export default function Contact({ contact }: { contact?: ContactInfo }) {
     const info = contact ?? {};
+    const { data, setData, post, processing, errors, reset } = useForm({ name: '', email: '', message: '' });
+
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post('/contact/message', {
+            preserveScroll: true,
+            onSuccess: () => {
+                reset();
+                toast.success('Message sent successfully!');
+            },
+        });
+    };
+
     return (
         <CustomerLayout>
             <Head title="Contact Us" />
@@ -19,21 +33,24 @@ export default function Contact({ contact }: { contact?: ContactInfo }) {
                     {/* Contact Form */}
                     <div className="bg-card p-8 border rounded-xl shadow-sm">
                         <h3 className="text-2xl font-bold mb-6">Send us a Message</h3>
-                        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert("Message sent successfully!"); }}>
+                        <form className="space-y-4" onSubmit={submit}>
                             <div>
                                 <label className="block text-sm font-medium mb-1">Your Name</label>
-                                <input type="text" className="w-full border rounded-md px-3 py-2 outline-none focus:border-shop-primary focus:ring-1 focus:ring-shop-primary" placeholder="John Doe" required />
+                                <input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-shop-primary focus:ring-1 focus:ring-shop-primary" placeholder="John Doe" required />
+                                {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-1">Email Address</label>
-                                <input type="email" className="w-full border rounded-md px-3 py-2 outline-none focus:border-shop-primary focus:ring-1 focus:ring-shop-primary" placeholder="john@example.com" required />
+                                <input type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-shop-primary focus:ring-1 focus:ring-shop-primary" placeholder="john@example.com" required />
+                                {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-1">Message</label>
-                                <textarea className="w-full border rounded-md px-3 py-2 outline-none focus:border-shop-primary focus:ring-1 focus:ring-shop-primary min-h-[120px]" placeholder="How can we help you?" required></textarea>
+                                <textarea value={data.message} onChange={(e) => setData('message', e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-shop-primary focus:ring-1 focus:ring-shop-primary min-h-[120px]" placeholder="How can we help you?" required></textarea>
+                                {errors.message && <p className="text-destructive text-sm mt-1">{errors.message}</p>}
                             </div>
-                            <button type="submit" className="w-full bg-shop-primary text-white py-2.5 rounded-md font-semibold hover:bg-shop-primary-hover transition-colors">
-                                Send Message
+                            <button type="submit" disabled={processing} className="w-full bg-shop-primary text-white py-2.5 rounded-md font-semibold hover:bg-shop-primary-hover transition-colors disabled:opacity-60">
+                                {processing ? 'Sending...' : 'Send Message'}
                             </button>
                         </form>
                     </div>

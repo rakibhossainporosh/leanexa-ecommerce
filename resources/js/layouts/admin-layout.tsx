@@ -21,6 +21,7 @@ import {
     PanelLeftOpen,
     UserCog,
     CreditCard,
+    MessageSquare,
     type LucideIcon,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -62,6 +63,7 @@ const navGroups: NavGroup[] = [
         label: 'Customers & Marketing',
         items: [
             { name: 'Customers', href: '/admin/customers', icon: Users },
+            { name: 'Messages', href: '/admin/messages', icon: MessageSquare },
             { name: 'Coupons', href: '/admin/coupons', icon: Ticket },
             { name: 'Abandoned Carts', href: '/admin/abandoned-carts', icon: ShoppingBag },
         ],
