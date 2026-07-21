@@ -70,7 +70,7 @@ export default function AdminLogin({ status }: Props) {
                                 autoFocus
                                 tabIndex={1}
                                 autoComplete="email"
-                                placeholder="admin@example.com"
+                                placeholder="Enter your email"
                                 className="h-11 border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:ring-shop-primary"
                             />
                             <InputError message={errors.email} />

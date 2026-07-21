@@ -36,12 +36,12 @@ export default function Contact({ contact }: { contact?: ContactInfo }) {
                         <form className="space-y-4" onSubmit={submit}>
                             <div>
                                 <label className="block text-sm font-medium mb-1">Your Name</label>
-                                <input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-shop-primary focus:ring-1 focus:ring-shop-primary" placeholder="John Doe" required />
+                                <input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-shop-primary focus:ring-1 focus:ring-shop-primary" placeholder="Enter your full name" required />
                                 {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-1">Email Address</label>
-                                <input type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-shop-primary focus:ring-1 focus:ring-shop-primary" placeholder="john@example.com" required />
+                                <input type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} className="w-full border rounded-md px-3 py-2 outline-none focus:border-shop-primary focus:ring-1 focus:ring-shop-primary" placeholder="Enter your email address" required />
                                 {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
                             </div>
                             <div>
