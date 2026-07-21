@@ -2,6 +2,7 @@ import { Head, useForm, router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import PasswordInput from '@/components/password-input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -100,27 +101,13 @@ export default function UsersIndex({
                                 {errors.email && <p className="text-destructive text-sm">{errors.email}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="role">Role</Label>
-                                <select
-                                    id="role"
-                                    value={data.role}
-                                    onChange={(e) => setData('role', e.target.value)}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                >
-                                    {roles.map((r) => (
-                                        <option key={r} value={r}>{r}</option>
-                                    ))}
-                                </select>
-                                {errors.role && <p className="text-destructive text-sm">{errors.role}</p>}
-                            </div>
-                            <div className="space-y-2">
                                 <Label htmlFor="password">{editing ? 'New Password (optional)' : 'Password'}</Label>
-                                <Input id="password" type="password" autoComplete="new-password" value={data.password} onChange={(e) => setData('password', e.target.value)} />
+                                <PasswordInput id="password" autoComplete="new-password" value={data.password} onChange={(e) => setData('password', e.target.value)} />
                                 {errors.password && <p className="text-destructive text-sm">{errors.password}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="password_confirmation">Confirm Password</Label>
-                                <Input id="password_confirmation" type="password" autoComplete="new-password" value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)} />
+                                <PasswordInput id="password_confirmation" autoComplete="new-password" value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)} />
                             </div>
                             <DialogFooter>
                                 <Button type="submit" disabled={processing}>{editing ? 'Update Admin' : 'Create Admin'}</Button>
@@ -148,7 +135,6 @@ export default function UsersIndex({
                             <TableRow>
                                 <TableHead className="pl-6">Name</TableHead>
                                 <TableHead>Email</TableHead>
-                                <TableHead>Role</TableHead>
                                 <TableHead>Joined</TableHead>
                                 <TableHead className="pr-6 text-right">Actions</TableHead>
                             </TableRow>
@@ -168,13 +154,6 @@ export default function UsersIndex({
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                                    <TableCell>
-                                        {u.role ? (
-                                            <span className="bg-muted rounded-md px-2 py-1 text-xs font-medium">{u.role}</span>
-                                        ) : (
-                                            <span className="text-muted-foreground text-xs">No role</span>
-                                        )}
-                                    </TableCell>
                                     <TableCell className="text-muted-foreground text-xs">
                                         {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
                                     </TableCell>

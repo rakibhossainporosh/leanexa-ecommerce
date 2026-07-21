@@ -79,8 +79,9 @@ export default function LandingIndex({
             e.preventDefault();
         }
 
-        settingsForm.put('/admin/landing', { 
+        settingsForm.put('/admin/landing', {
             preserveScroll: true,
+            onSuccess: () => toast.success('Landing page settings saved.'),
             onError: (errors) => {
                 const firstError = Object.values(errors)[0];
                 if (firstError) {
@@ -154,7 +155,10 @@ export default function LandingIndex({
         e.preventDefault();
         const opts = {
             preserveScroll: true,
-            onSuccess: () => setBannerOpen(false),
+            onSuccess: () => {
+                setBannerOpen(false);
+                toast.success(editingBanner ? 'Banner updated.' : 'Banner added.');
+            },
         };
 
         if (editingBanner) {
@@ -168,6 +172,7 @@ export default function LandingIndex({
         if (confirm(`Delete banner "${b.title}"?`)) {
             router.delete(`/admin/landing/banners/${b.id}`, {
                 preserveScroll: true,
+                onSuccess: () => toast.success('Banner deleted.'),
             });
         }
     };
