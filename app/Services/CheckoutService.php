@@ -207,6 +207,25 @@ class CheckoutService
      */
     private function reserveStock(?int $colorVariantId, ?int $sizeVariantId, int $productId, int $quantity, string $name): void
     {
+        // Matrix products track stock on the size+colour pair, so decrement the
+        // combination row (not the individual size and colour rows, which would
+        // double-count).
+        if ($colorVariantId && $sizeVariantId) {
+            $combination = \App\Models\ProductVariantCombination::where('size_variant_id', $sizeVariantId)
+                ->where('color_variant_id', $colorVariantId)
+                ->first();
+            if ($combination) {
+                $affected = \App\Models\ProductVariantCombination::where('id', $combination->id)
+                    ->where('stock', '>=', $quantity)
+                    ->decrement('stock', $quantity);
+                if (! $affected) {
+                    throw new \Exception("Not enough stock for {$name}.");
+                }
+
+                return;
+            }
+        }
+
         if ($colorVariantId) {
             $affectedColor = ProductVariant::where('id', $colorVariantId)
                 ->where('stock', '>=', $quantity)

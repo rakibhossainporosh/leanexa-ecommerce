@@ -1,7 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import CustomerLayout from '@/layouts/customer-layout';
 import { Badge } from '@/components/ui/badge';
-import { Package, Heart, Settings, LogOut, ChevronRight, User } from 'lucide-react';
+import { Package, Heart, LogOut, ChevronRight } from 'lucide-react';
 import { useCurrency } from '@/hooks/use-currency';
 
 type Order = { id: number; order_number: string; status: string; total_amount: string | number; created_at: string };
@@ -20,7 +20,6 @@ export default function AccountIndex({
     const links = [
         { label: 'My Orders', description: 'Track and review your purchases', href: '/orders', icon: Package },
         { label: 'Wishlist', description: 'Products you saved for later', href: '/wishlist', icon: Heart },
-        { label: 'Account Settings', description: 'Update your profile and password', href: '/settings/profile', icon: Settings },
     ];
 
     return (
@@ -39,7 +38,7 @@ export default function AccountIndex({
                 </div>
 
                 {/* Stat tiles */}
-                <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <div className="mb-6 grid grid-cols-2 gap-4">
                     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
                         <Package className="mb-2 h-5 w-5 text-shop" />
                         <div className="text-2xl font-bold">{stats.orders}</div>
@@ -50,11 +49,6 @@ export default function AccountIndex({
                         <div className="text-2xl font-bold">{stats.wishlist}</div>
                         <div className="text-sm text-muted-foreground">Wishlist items</div>
                     </div>
-                    <Link href="/settings/profile" className="hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-shop sm:block">
-                        <User className="mb-2 h-5 w-5 text-shop" />
-                        <div className="text-2xl font-bold">Profile</div>
-                        <div className="text-sm text-muted-foreground">Manage details</div>
-                    </Link>
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-3">

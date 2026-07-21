@@ -42,12 +42,44 @@ export default function ProductShow({ product }: { product: any }) {
     const colorVariants = product.variants?.filter((v: any) => !sizeVariants.includes(v)) || [];
     const { general_settings } = usePage<any>().props;
 
+    // Matrix products list the valid size+colour pairs with their own stock.
+    const combinations: any[] = product.combinations || [];
+    const hasMatrix = combinations.length > 0;
+    const comboStock = (sizeId: number | null, colorId: number | null): number =>
+        combinations.find((c) => c.size_variant_id === sizeId && c.color_variant_id === colorId)?.stock ?? 0;
+    const colorAvailableForSize = (colorId: number, sizeId: number | null): boolean =>
+        !hasMatrix || combinations.some((c) => c.color_variant_id === colorId && c.size_variant_id === sizeId && c.stock > 0);
+    const sizeAvailableForColor = (sizeId: number, colorId: number | null): boolean =>
+        !hasMatrix || combinations.some((c) => c.size_variant_id === sizeId && c.color_variant_id === colorId && c.stock > 0);
+
+    // For a matrix, start on the first in-stock pair so the initial state is valid.
+    const firstCombo = hasMatrix ? (combinations.find((c) => c.stock > 0) || combinations[0]) : null;
+
     const [selectedColorId, setSelectedColorId] = useState<number | null>(
-        colorVariants.length > 0 ? colorVariants[0].id : null
+        firstCombo ? firstCombo.color_variant_id : (colorVariants.length > 0 ? colorVariants[0].id : null)
     );
     const [selectedSizeId, setSelectedSizeId] = useState<number | null>(
-        sizeVariants.length > 0 ? sizeVariants[0].id : null
+        firstCombo ? firstCombo.size_variant_id : (sizeVariants.length > 0 ? sizeVariants[0].id : null)
     );
+
+    // In matrix mode, keep the two axes consistent: picking one auto-moves the
+    // other to a valid, in-stock pair when the current pick becomes invalid.
+    const pickColor = (colorId: number) => {
+        setSelectedColorId(colorId);
+        if (hasMatrix && !sizeAvailableForColor(selectedSizeId as number, colorId)) {
+            const alt = combinations.find((c) => c.color_variant_id === colorId && c.stock > 0)
+                || combinations.find((c) => c.color_variant_id === colorId);
+            if (alt) setSelectedSizeId(alt.size_variant_id);
+        }
+    };
+    const pickSize = (sizeId: number) => {
+        setSelectedSizeId(sizeId);
+        if (hasMatrix && !colorAvailableForSize(selectedColorId as number, sizeId)) {
+            const alt = combinations.find((c) => c.size_variant_id === sizeId && c.stock > 0)
+                || combinations.find((c) => c.size_variant_id === sizeId);
+            if (alt) setSelectedColorId(alt.color_variant_id);
+        }
+    };
     const [sizeChartGender, setSizeChartGender] = useState<'male' | 'female'>('male');
     const [activeTab, setActiveTab] = useState<'description' | 'shipping'>('description');
     const [descExpanded, setDescExpanded] = useState(false);
@@ -69,7 +101,9 @@ export default function ProductShow({ product }: { product: any }) {
     const displayPrice = selectedSize?.price ? selectedSize.price : (selectedColor?.price ? selectedColor.price : product.price);
     
     let displayStock = product.stock;
-    if (selectedColor && selectedSize) {
+    if (hasMatrix) {
+        displayStock = (selectedColorId && selectedSizeId) ? comboStock(selectedSizeId, selectedColorId) : 0;
+    } else if (selectedColor && selectedSize) {
         displayStock = Math.min(selectedColor.stock, selectedSize.stock);
     } else if (selectedColor) {
         displayStock = selectedColor.stock;
@@ -260,25 +294,28 @@ export default function ProductShow({ product }: { product: any }) {
                             <div className="mb-6">
                                 <h3 className="text-sm font-medium mb-3">Select Color</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {colorVariants.map((variant: any) => (
+                                    {colorVariants.map((variant: any) => {
+                                        const disabled = hasMatrix ? !colorAvailableForSize(variant.id, selectedSizeId) : variant.stock <= 0;
+                                        return (
                                         <button
                                             key={variant.id}
                                             onClick={() => {
-                                                setSelectedColorId(variant.id);
+                                                pickColor(variant.id);
                                                 if (variant.image_path) {
                                                     setUserSelectedImage(variant.image_path);
                                                 }
                                             }}
                                             className={`px-4 py-2 text-sm rounded-lg border transition-all ${
-                                                selectedColorId === variant.id 
-                                                ? 'border-[#00704A] bg-[#00704A]/5 text-[#00704A] font-medium' 
+                                                selectedColorId === variant.id
+                                                ? 'border-[#00704A] bg-[#00704A]/5 text-[#00704A] font-medium'
                                                 : 'border-border hover:border-[#00704A]/50'
-                                            } ${variant.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            disabled={variant.stock <= 0}
+                                            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            disabled={disabled}
                                         >
                                             {variant.name}
                                         </button>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -358,22 +395,25 @@ export default function ProductShow({ product }: { product: any }) {
                                     </Dialog>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                    {sizeVariants.map((variant: any) => (
+                                    {sizeVariants.map((variant: any) => {
+                                        const disabled = hasMatrix ? !sizeAvailableForColor(variant.id, selectedColorId) : variant.stock <= 0;
+                                        return (
                                         <button
                                             key={variant.id}
                                             onClick={() => {
-                                                setSelectedSizeId(variant.id);
+                                                pickSize(variant.id);
                                             }}
                                             className={`px-4 py-2 text-sm rounded-lg border transition-all ${
-                                                selectedSizeId === variant.id 
-                                                ? 'border-[#00704A] bg-[#00704A]/5 text-[#00704A] font-medium' 
+                                                selectedSizeId === variant.id
+                                                ? 'border-[#00704A] bg-[#00704A]/5 text-[#00704A] font-medium'
                                                 : 'border-border hover:border-[#00704A]/50'
-                                            } ${variant.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            disabled={variant.stock <= 0}
+                                            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            disabled={disabled}
                                         >
                                             {variant.name}
                                         </button>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -438,9 +478,21 @@ export default function ProductShow({ product }: { product: any }) {
                                         <div className="text-muted-foreground text-base/relaxed">No description provided.</div>
                                     )
                                 ) : (
-                                    <div className="text-muted-foreground text-base/relaxed whitespace-pre-wrap">
-                                        {general_settings?.shipping_details || 'Shipping details will be updated soon.'}
-                                    </div>
+                                    general_settings?.shipping_details ? (
+                                        /^\s*</.test(general_settings.shipping_details) ? (
+                                            <div
+                                                className="ck-content text-muted-foreground text-base/relaxed"
+                                                dangerouslySetInnerHTML={{ __html: general_settings.shipping_details }}
+                                            />
+                                        ) : (
+                                            // Legacy plain-text content: keep line breaks.
+                                            <div className="text-muted-foreground text-base/relaxed whitespace-pre-wrap">
+                                                {general_settings.shipping_details}
+                                            </div>
+                                        )
+                                    ) : (
+                                        <div className="text-muted-foreground text-base/relaxed">Shipping details will be updated soon.</div>
+                                    )
                                 )}
                             </div>
                         </div>

@@ -72,6 +72,22 @@ class CartService
             $stock = min($stock, $sizeVariant->stock);
         }
 
+        // Matrix products define which size+colour pairs exist and hold stock
+        // per pair — the chosen pair must be a listed combination.
+        if ($product->combinations()->exists()) {
+            if (! $colorVariantId || ! $sizeVariantId) {
+                throw new \Exception('Please select both a size and a colour.');
+            }
+            $combination = $product->combinations()
+                ->where('size_variant_id', $sizeVariantId)
+                ->where('color_variant_id', $colorVariantId)
+                ->first();
+            if (! $combination) {
+                throw new \Exception('This size and colour combination is not available.');
+            }
+            $stock = (int) $combination->stock;
+        }
+
         $cartItem = $cart->items()->where('product_id', $productId)
             ->where('color_variant_id', $colorVariantId)
             ->where('size_variant_id', $sizeVariantId)
@@ -110,7 +126,17 @@ class CartService
             $stock = $cartItem->product->stock;
             if ($cartItem->colorVariant) $stock = min($stock, $cartItem->colorVariant->stock);
             if ($cartItem->sizeVariant) $stock = min($stock, $cartItem->sizeVariant->stock);
-            
+
+            // Matrix products: the pair's own stock is authoritative.
+            if ($cartItem->color_variant_id && $cartItem->size_variant_id) {
+                $combination = \App\Models\ProductVariantCombination::where('size_variant_id', $cartItem->size_variant_id)
+                    ->where('color_variant_id', $cartItem->color_variant_id)
+                    ->first();
+                if ($combination) {
+                    $stock = (int) $combination->stock;
+                }
+            }
+
             if ($quantity > $stock) {
                 throw new \Exception("Cannot update quantity. Only {$stock} items left in stock.");
             }

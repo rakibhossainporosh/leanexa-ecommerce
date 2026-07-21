@@ -7,15 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
-import JoditEditor from 'jodit-react';
+import RichTextEditor from '@/components/rich-text-editor';
 
 interface QA {
     question: string;
     answer: string;
 }
 
+interface Feature {
+    title: string;
+    description: string;
+}
+
 interface PageSettingsProps {
     pages: {
+        about_intro: string;
+        about_features: Feature[];
         our_story: string;
         returns_refunds: string;
         privacy_policy: string;
@@ -46,6 +53,8 @@ interface CustomPageRow {
 
 export default function PageSettingsIndex({ pages, customPages = [] }: PageSettingsProps) {
     const { data, setData, put, processing, errors } = useForm({
+        about_intro: pages.about_intro || '',
+        about_features: pages.about_features || [],
         our_story: pages.our_story || '',
         returns_refunds: pages.returns_refunds || '',
         privacy_policy: pages.privacy_policy || '',
@@ -104,14 +113,22 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
         setData('faq', newFaq);
     };
 
-    const config = {
-        readonly: false,
-        height: 400,
-        placeholder: 'Start typings...'
+    const addFeature = () => setData('about_features', [...data.about_features, { title: '', description: '' }]);
+    const removeFeature = (index: number) => {
+        const next = [...data.about_features];
+        next.splice(index, 1);
+        setData('about_features', next);
     };
+    const updateFeature = (index: number, field: 'title' | 'description', value: string) => {
+        const next = [...data.about_features];
+        next[index][field] = value;
+        setData('about_features', next);
+    };
+
 
     const TABS = [
         { id: 'auth', label: 'Register & Login' },
+        { id: 'about', label: 'About Us' },
         { id: 'story', label: 'Our Story' },
         { id: 'policies', label: 'Policies' },
         { id: 'faq', label: 'FAQ' },
@@ -208,6 +225,62 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
                     </Card>
                 ))}
 
+                {activeTab === 'about' && (
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>About Us — Intro</CardTitle>
+                            <CardDescription>The introductory text shown at the top of the About Us page.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                <RichTextEditor value={data.about_intro} onChange={(html) => setData('about_intro', html)} />
+                                {errors.about_intro && <p className="text-sm text-red-500">{errors.about_intro}</p>}
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Feature Boxes</CardTitle>
+                                <CardDescription>The highlight cards below the intro (e.g. Quality First, Fast Delivery).</CardDescription>
+                            </div>
+                            <Button type="button" variant="outline" size="sm" onClick={addFeature} className="flex items-center gap-1">
+                                <Plus className="h-4 w-4" /> Add Box
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {data.about_features.map((item, index) => (
+                                    <div key={index} className="flex gap-4 items-start border p-4 rounded-md bg-muted/20">
+                                        <div className="flex-1 space-y-3">
+                                            <div className="space-y-2">
+                                                <Label>Title</Label>
+                                                <Input value={item.title} onChange={(e) => updateFeature(index, 'title', e.target.value)} placeholder="e.g. Quality First" />
+                                                {/* @ts-ignore */}
+                                                {errors[`about_features.${index}.title`] && <p className="text-sm text-red-500">{errors[`about_features.${index}.title`]}</p>}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Description</Label>
+                                                <Textarea value={item.description} onChange={(e) => updateFeature(index, 'description', e.target.value)} placeholder="Short description..." rows={2} />
+                                                {/* @ts-ignore */}
+                                                {errors[`about_features.${index}.description`] && <p className="text-sm text-red-500">{errors[`about_features.${index}.description`]}</p>}
+                                            </div>
+                                        </div>
+                                        <Button type="button" variant="destructive" size="icon" onClick={() => removeFeature(index)} className="shrink-0 mt-8">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                                {data.about_features.length === 0 && (
+                                    <p className="text-sm text-muted-foreground text-center py-4 border rounded-md border-dashed">No feature boxes. Click "Add Box" to add one.</p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+                )}
+
                 {activeTab === 'story' && (
                 <Card>
                     <CardHeader>
@@ -216,11 +289,7 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
-                            <JoditEditor
-                                value={data.our_story}
-                                config={config}
-                                onBlur={(newContent) => setData('our_story', newContent)}
-                            />
+                            <RichTextEditor value={data.our_story} onChange={(html) => setData('our_story', html)} />
                             {errors.our_story && <p className="text-sm text-red-500">{errors.our_story}</p>}
                         </div>
                     </CardContent>
@@ -236,11 +305,7 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
-                            <JoditEditor
-                                value={data.returns_refunds}
-                                config={config}
-                                onBlur={(newContent) => setData('returns_refunds', newContent)}
-                            />
+                            <RichTextEditor value={data.returns_refunds} onChange={(html) => setData('returns_refunds', html)} />
                             {errors.returns_refunds && <p className="text-sm text-red-500">{errors.returns_refunds}</p>}
                         </div>
                     </CardContent>
@@ -253,11 +318,7 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
-                            <JoditEditor
-                                value={data.privacy_policy}
-                                config={config}
-                                onBlur={(newContent) => setData('privacy_policy', newContent)}
-                            />
+                            <RichTextEditor value={data.privacy_policy} onChange={(html) => setData('privacy_policy', html)} />
                             {errors.privacy_policy && <p className="text-sm text-red-500">{errors.privacy_policy}</p>}
                         </div>
                     </CardContent>
@@ -270,11 +331,7 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
-                            <JoditEditor
-                                value={data.terms_conditions}
-                                config={config}
-                                onBlur={(newContent) => setData('terms_conditions', newContent)}
-                            />
+                            <RichTextEditor value={data.terms_conditions} onChange={(html) => setData('terms_conditions', html)} />
                             {errors.terms_conditions && <p className="text-sm text-red-500">{errors.terms_conditions}</p>}
                         </div>
                     </CardContent>
@@ -287,11 +344,7 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
-                            <JoditEditor
-                                value={data.shipping_policy}
-                                config={config}
-                                onBlur={(newContent) => setData('shipping_policy', newContent)}
-                            />
+                            <RichTextEditor value={data.shipping_policy} onChange={(html) => setData('shipping_policy', html)} />
                             {errors.shipping_policy && <p className="text-sm text-red-500">{errors.shipping_policy}</p>}
                         </div>
                     </CardContent>
@@ -304,11 +357,7 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
-                            <JoditEditor
-                                value={data.return_policy}
-                                config={config}
-                                onBlur={(newContent) => setData('return_policy', newContent)}
-                            />
+                            <RichTextEditor value={data.return_policy} onChange={(html) => setData('return_policy', html)} />
                             {errors.return_policy && <p className="text-sm text-red-500">{errors.return_policy}</p>}
                         </div>
                     </CardContent>
@@ -321,11 +370,7 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
-                            <JoditEditor
-                                value={data.warranty_policy}
-                                config={config}
-                                onBlur={(newContent) => setData('warranty_policy', newContent)}
-                            />
+                            <RichTextEditor value={data.warranty_policy} onChange={(html) => setData('warranty_policy', html)} />
                             {errors.warranty_policy && <p className="text-sm text-red-500">{errors.warranty_policy}</p>}
                         </div>
                     </CardContent>
@@ -391,12 +436,12 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
                 )}
             </form>
 
-            {activeTab === 'pages' && <CustomPagesManager pages={customPages} config={config} />}
+            {activeTab === 'pages' && <CustomPagesManager pages={customPages} />}
         </AdminLayout>
     );
 }
 
-function CustomPagesManager({ pages, config }: { pages: CustomPageRow[]; config: any }) {
+function CustomPagesManager({ pages }: { pages: CustomPageRow[] }) {
     const emptyForm = { title: '', slug: '', content: '', is_active: true, show_in_footer: true, footer_section: 'company' };
     const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm<typeof emptyForm>({ ...emptyForm });
     const [editingId, setEditingId] = React.useState<number | null>(null);
@@ -477,7 +522,7 @@ function CustomPagesManager({ pages, config }: { pages: CustomPageRow[]; config:
                         <div className="space-y-2">
                             <Label>Content</Label>
                             <div className="rounded-md border">
-                                <JoditEditor value={data.content} config={config} onBlur={(c) => setData('content', c)} />
+                                <RichTextEditor value={data.content} onChange={(html) => setData('content', html)} />
                             </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-6">

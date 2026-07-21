@@ -640,8 +640,27 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                                 )}
                             </Link>
                             <p className="text-sm leading-relaxed text-muted-foreground">
-                                Your one-stop shop for premium electronics, gadgets and accessories — delivered fast, right to your door.
+                                {general_settings?.footer_description || 'Your one-stop shop for premium electronics, gadgets and accessories — delivered fast, right to your door.'}
                             </p>
+                            {(general_settings?.facebook_link || general_settings?.instagram_link || general_settings?.youtube_link) && (
+                                <div className="mt-5 flex gap-3 flex-wrap">
+                                    {general_settings?.facebook_link && (
+                                        <a href={general_settings.facebook_link} className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-shop-primary hover:text-white">
+                                            <Facebook className="h-4 w-4" />
+                                        </a>
+                                    )}
+                                    {general_settings?.instagram_link && (
+                                        <a href={general_settings.instagram_link} className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-shop-primary hover:text-white">
+                                            <Instagram className="h-4 w-4" />
+                                        </a>
+                                    )}
+                                    {general_settings?.youtube_link && (
+                                        <a href={general_settings.youtube_link} className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-shop-primary hover:text-white">
+                                            <Youtube className="h-4 w-4" />
+                                        </a>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Column 1: Company */}
@@ -689,33 +708,14 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                             </ul>
                         </div>
 
-                        {/* Column 4: Contact Us & Follow Us */}
+                        {/* Column 4: Contact Us */}
                         <div className="col-span-1">
                             <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-foreground">Contact Us</h3>
-                            <ul className="space-y-3 text-sm text-muted-foreground mb-8 break-words">
+                            <ul className="space-y-3 text-sm text-muted-foreground break-words">
                                 {general_settings?.store_address && <li className="flex items-start gap-2"><MapPin className="h-4 w-4 mt-0.5 text-shop shrink-0" /> <span>{general_settings.store_address}</span></li>}
                                 {general_settings?.store_phone && <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-shop shrink-0" /> {general_settings.store_phone}</li>}
                                 {general_settings?.store_email && <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-shop shrink-0" /> <span className="truncate">{general_settings.store_email}</span></li>}
                             </ul>
-
-                            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-foreground">Follow Us</h3>
-                            <div className="flex gap-3 flex-wrap">
-                                {general_settings?.facebook_link && (
-                                    <a href={general_settings.facebook_link} className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-shop-primary hover:text-white">
-                                        <Facebook className="h-4 w-4" />
-                                    </a>
-                                )}
-                                {general_settings?.instagram_link && (
-                                    <a href={general_settings.instagram_link} className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-shop-primary hover:text-white">
-                                        <Instagram className="h-4 w-4" />
-                                    </a>
-                                )}
-                                {general_settings?.youtube_link && (
-                                    <a href={general_settings.youtube_link} className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-shop-primary hover:text-white">
-                                        <Youtube className="h-4 w-4" />
-                                    </a>
-                                )}
-                            </div>
                         </div>
                     </div>
 

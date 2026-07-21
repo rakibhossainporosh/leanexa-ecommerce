@@ -94,6 +94,7 @@ class Setting extends Model
             'store_email' => 'support@eshop.com',
             'store_phone' => '+880 1234 567890',
             'store_address' => 'Dhaka, Bangladesh',
+            'footer_description' => 'Your one-stop shop for premium electronics, gadgets and accessories — delivered fast, right to your door.',
             'delivery_inside_dhaka' => 60,
             'delivery_outside_dhaka' => 120,
             'delivery_usa' => 0,
@@ -176,6 +177,12 @@ class Setting extends Model
     public static function pageDefaults(): array
     {
         return [
+            'about_intro' => '<p>Welcome to EShop. We are dedicated to providing you with the best electronics, gadgets, and accessories. Our mission is to bring high-quality tech products directly to your door with exceptional customer service.</p>',
+            'about_features' => [
+                ['title' => 'Quality First', 'description' => 'We ensure all our products meet strict quality standards.'],
+                ['title' => 'Fast Delivery', 'description' => 'Get your orders delivered to you as fast as possible.'],
+                ['title' => '24/7 Support', 'description' => 'Our team is always ready to assist you anytime.'],
+            ],
             'our_story' => '<p>Welcome to our store. We started with a simple idea: to provide high-quality products at accessible prices.</p><p>Over the years, our passion for excellence has driven us from the beginning and continues to drive us into the future. The team knows that every product counts, and strives to make the entire shopping experience as rewarding and fun as possible.</p><p>Check out our store and special offers, and get in touch with questions or requests. We are always happy to help!</p>',
             'returns_refunds' => '<section><h2>Return Policy</h2><p>We have a 30-day return policy, which means you have 30 days after receiving your item to request a return.</p><p>To be eligible for a return, your item must be in the same condition that you received it, unworn or unused, with tags, and in its original packaging. You’ll also need the receipt or proof of purchase.</p></section><section><h2>Refunds</h2><p>We will notify you once we’ve received and inspected your return, and let you know if the refund was approved or not. If approved, you’ll be automatically refunded on your original payment method. Please remember it can take some time for your bank or credit card company to process and post the refund too.</p></section><section><h2>Exchanges</h2><p>The fastest way to ensure you get what you want is to return the item you have, and once the return is accepted, make a separate purchase for the new item.</p></section>',
             'privacy_policy' => '<p>This Privacy Policy describes how your personal information is collected, used, and shared when you visit or make a purchase from our site.</p>',

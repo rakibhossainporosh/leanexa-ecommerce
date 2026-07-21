@@ -10,6 +10,7 @@ class ProductVariant extends Model
         'product_id',
         'type',
         'name',
+        'size',
         'price',
         'stock',
         'sku',

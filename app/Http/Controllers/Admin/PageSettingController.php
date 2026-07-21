@@ -20,6 +20,10 @@ class PageSettingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'about_intro' => 'nullable|string',
+            'about_features' => 'nullable|array|max:6',
+            'about_features.*.title' => 'required|string|max:255',
+            'about_features.*.description' => 'required|string|max:1000',
             'our_story' => 'nullable|string',
             'returns_refunds' => 'nullable|string',
             'privacy_policy' => 'nullable|string',

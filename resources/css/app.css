@@ -241,3 +241,29 @@
         background-color: rgba(156, 163, 175, 0.5);
     }
 }
+
+/* CKEditor 5 — give the editable area a comfortable minimum height and let it
+   sit inside our bordered containers cleanly. */
+.ck-editor__editable_inline {
+    min-height: 220px;
+}
+.ck.ck-editor {
+    width: 100%;
+}
+
+/* CKEditor content: Tailwind's Preflight resets headings/lists to look like
+   plain text, which makes toolbar formatting appear to do nothing. These
+   .ck-content rules (higher specificity than element resets) restore the
+   expected styling inside the editor. */
+.ck-content h1 { font-size: 2em; font-weight: 700; margin: 0.67em 0; }
+.ck-content h2 { font-size: 1.5em; font-weight: 700; margin: 0.75em 0; }
+.ck-content h3 { font-size: 1.25em; font-weight: 700; margin: 0.83em 0; }
+.ck-content h4 { font-size: 1.1em; font-weight: 600; margin: 1em 0; }
+.ck-content p { margin: 0 0 0.75em; }
+.ck-content ul { list-style: disc; margin: 0 0 1em; padding-left: 1.5em; }
+.ck-content ol { list-style: decimal; margin: 0 0 1em; padding-left: 1.5em; }
+.ck-content li { margin: 0.25em 0; }
+.ck-content blockquote { border-left: 4px solid rgba(148,163,184,0.6); padding-left: 1em; font-style: italic; margin: 0 0 1em; }
+.ck-content a { color: #2563eb; text-decoration: underline; }
+.ck-content strong { font-weight: 700; }
+.ck-content em { font-style: italic; }

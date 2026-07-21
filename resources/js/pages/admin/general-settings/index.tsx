@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import RichTextEditor from '@/components/rich-text-editor';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Hash, Mail, Palette, Share2, ShoppingCart, Store, Truck } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,6 +17,7 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
         store_email: settings.store_email || '',
         store_phone: settings.store_phone || '',
         store_address: settings.store_address || '',
+        footer_description: settings.footer_description || '',
         delivery_inside_dhaka: settings.delivery_inside_dhaka || 0,
         delivery_outside_dhaka: settings.delivery_outside_dhaka || 0,
         delivery_usa: settings.delivery_usa || 0,
@@ -112,6 +114,19 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
                                 onChange={(e) => setData('store_address', e.target.value)}
                             />
                             {errors.store_address && <p className="text-destructive text-sm">{errors.store_address}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="footer_description">Footer Description</Label>
+                            <p className="text-muted-foreground text-xs">The short tagline shown under the logo in the footer.</p>
+                            <Textarea
+                                id="footer_description"
+                                rows={3}
+                                value={data.footer_description}
+                                onChange={(e) => setData('footer_description', e.target.value)}
+                                placeholder="Your one-stop shop for..."
+                            />
+                            {errors.footer_description && <p className="text-destructive text-sm">{errors.footer_description}</p>}
                         </div>
                     </CardContent>
                 </Card>
@@ -282,13 +297,13 @@ export default function GeneralSettingsIndex({ settings }: { settings: any }) {
                         <div className="space-y-2 border-t pt-4">
                             <Label htmlFor="shipping_details">Shipping Details</Label>
                             <p className="text-muted-foreground text-xs">Shown to customers on every product page.</p>
-                            <Textarea
-                                id="shipping_details"
-                                value={data.shipping_details}
-                                onChange={(e) => setData('shipping_details', e.target.value)}
-                                rows={6}
-                                placeholder="Enter shipping details..."
-                            />
+                            <div className="rounded-md border">
+                                <RichTextEditor
+                                    value={data.shipping_details}
+                                    onChange={(html) => setData('shipping_details', html)}
+                                    placeholder="Enter shipping details..."
+                                />
+                            </div>
                             {errors.shipping_details && <p className="text-destructive text-sm">{errors.shipping_details}</p>}
                         </div>
                     </CardContent>

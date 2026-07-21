@@ -70,6 +70,7 @@ class ProductService
                     $product->variants()->create([
                         'type' => $variant['type'] ?? 'color',
                         'name' => $variant['name'],
+                        'size' => $variant['size'] ?? null,
                         'price' => isset($variant['price']) && $variant['price'] !== '' ? $variant['price'] : null,
                         'stock' => $variant['stock'] ?? 0,
                         'sku' => $variant['sku'] ?? null,
@@ -109,6 +110,7 @@ class ProductService
                             $v->update([
                                 'type' => $variant['type'] ?? 'color',
                                 'name' => $variant['name'],
+                                'size' => $variant['size'] ?? null,
                                 'price' => isset($variant['price']) && $variant['price'] !== '' ? $variant['price'] : null,
                                 'stock' => $variant['stock'] ?? 0,
                                 'sku' => $variant['sku'] ?? null,
@@ -121,6 +123,7 @@ class ProductService
                         $newVariant = $product->variants()->create([
                             'type' => $variant['type'] ?? 'color',
                             'name' => $variant['name'],
+                            'size' => $variant['size'] ?? null,
                             'price' => isset($variant['price']) && $variant['price'] !== '' ? $variant['price'] : null,
                             'stock' => $variant['stock'] ?? 0,
                             'sku' => $variant['sku'] ?? null,

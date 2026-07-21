@@ -65,6 +65,11 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
+    public function combinations()
+    {
+        return $this->hasMany(ProductVariantCombination::class);
+    }
+
     public function wishlistedBy()
     {
         return $this->belongsToMany(Customer::class, 'wishlists', 'product_id', 'customer_id')->withTimestamps();

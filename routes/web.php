@@ -46,7 +46,14 @@ Route::get('/sync-favicon', function () {
 });
 
 // Customer Routes
-Route::get('/about', function () { return inertia('about'); })->name('about');
+Route::get('/about', function () {
+    $pages = \App\Models\Setting::pages();
+
+    return inertia('about', [
+        'intro' => $pages['about_intro'] ?? '',
+        'features' => $pages['about_features'] ?? [],
+    ]);
+})->name('about');
 Route::get('/contact', function () { return inertia('contact'); })->name('contact');
 Route::get('/our-story', function () { 
     return inertia('our-story', ['page_data' => \App\Models\Setting::pages()['our_story']]); 

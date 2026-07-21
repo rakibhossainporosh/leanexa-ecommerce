@@ -31,8 +31,15 @@ class ProductController extends Controller
 
     public function edit($id)
     {
-        $product = \App\Models\Product::with(['category', 'brand', 'tags', 'images', 'variants'])
+        $product = \App\Models\Product::with(['category', 'brand', 'tags', 'images', 'variants', 'combinations.sizeVariant', 'combinations.colorVariant'])
             ->findOrFail($id);
+
+        // Flatten combinations to {size, color, stock} keyed by name for the form.
+        $product->setAttribute('combination_rows', $product->combinations->map(fn ($c) => [
+            'size' => $c->sizeVariant?->name,
+            'color' => $c->colorVariant?->name,
+            'stock' => $c->stock,
+        ])->filter(fn ($c) => $c['size'] && $c['color'])->values());
 
         return Inertia::render('admin/products/edit', array_merge(
             ['product' => $product],
@@ -100,6 +107,7 @@ class ProductController extends Controller
             'variants' => 'nullable|array',
             'variants.*.type' => 'nullable|string|in:color,size',
             'variants.*.name' => 'required_with:variants|string|max:255',
+            'variants.*.size' => 'nullable|string|max:255',
             'variants.*.price' => 'nullable|numeric|min:0',
             'variants.*.stock' => 'nullable|integer|min:0',
             'variants.*.sku' => 'nullable|string|max:255|distinct|unique:product_variants,sku',
@@ -111,6 +119,11 @@ class ProductController extends Controller
             // Legacy single-image fields (kept for backward compatibility).
             'variants.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:20480',
             'variants.*.image_url' => 'nullable|string|max:2048',
+            // Valid size x color combinations with per-pair stock.
+            'combinations' => 'nullable|array',
+            'combinations.*.size' => 'required|string',
+            'combinations.*.color' => 'required|string',
+            'combinations.*.stock' => 'nullable|integer|min:0',
         ]);
 
         $tags = $request->input('tags', []);
@@ -135,8 +148,10 @@ class ProductController extends Controller
         unset($validated['image']);
         unset($validated['image_url']);
         unset($validated['variants']);
+        unset($validated['combinations']);
 
-        $this->productService->createProduct($validated, $tags, $images, [], $variants);
+        $product = $this->productService->createProduct($validated, $tags, $images, [], $variants);
+        $this->syncCombinations($product, $request->input('combinations', []));
 
         return redirect()->route('admin.products.index')->with('success', 'Product created successfully.');
     }
@@ -163,6 +178,7 @@ class ProductController extends Controller
             'variants.*.id' => 'nullable|exists:product_variants,id',
             'variants.*.type' => 'nullable|string|in:color,size',
             'variants.*.name' => 'required_with:variants|string|max:255',
+            'variants.*.size' => 'nullable|string|max:255',
             'variants.*.price' => 'nullable|numeric|min:0',
             'variants.*.stock' => 'nullable|integer|min:0',
             'variants.*.sku' => [
@@ -190,6 +206,11 @@ class ProductController extends Controller
             // Legacy single-image fields (kept for backward compatibility).
             'variants.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:20480',
             'variants.*.image_url' => 'nullable|string|max:2048',
+            // Valid size x color combinations with per-pair stock.
+            'combinations' => 'nullable|array',
+            'combinations.*.size' => 'required|string',
+            'combinations.*.color' => 'required|string',
+            'combinations.*.stock' => 'nullable|integer|min:0',
         ]);
 
         $tags = $request->input('tags', []);
@@ -209,6 +230,7 @@ class ProductController extends Controller
         unset($validated['image']);
         unset($validated['image_url']);
         unset($validated['variants']);
+        unset($validated['combinations']);
 
         $newImagePath = null;
         if ($request->hasFile('image')) {
@@ -217,7 +239,8 @@ class ProductController extends Controller
             $newImagePath = $this->normalizeMediaPath($request->input('image_url'));
         }
 
-        $this->productService->updateProduct($id, $validated, $tags, $variants);
+        $product = $this->productService->updateProduct($id, $validated, $tags, $variants);
+        $this->syncCombinations($product, $request->input('combinations', []));
 
         if ($newImagePath) {
             $product = \App\Models\Product::find($id);
@@ -231,6 +254,45 @@ class ProductController extends Controller
         }
 
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
+    }
+
+    /**
+     * Persist the product's valid size x color combinations. Combinations are
+     * submitted by size/colour NAME (variant ids may not exist yet on create),
+     * so we resolve them to the freshly-saved size and colour variant rows and
+     * replace the product's combination set with the enabled pairs.
+     *
+     * @param  array<int, array{size?: string, color?: string, stock?: mixed}>  $combinations
+     */
+    private function syncCombinations(\App\Models\Product $product, array $combinations): void
+    {
+        $product->load('variants');
+        $sizes = $product->variants->where('type', 'size')->keyBy(fn ($v) => trim(mb_strtolower($v->name)));
+        $colors = $product->variants->where('type', '!=', 'size')->keyBy(fn ($v) => trim(mb_strtolower($v->name)));
+
+        $keptIds = [];
+        foreach ($combinations as $combo) {
+            $sizeVariant = $sizes->get(trim(mb_strtolower($combo['size'] ?? '')));
+            $colorVariant = $colors->get(trim(mb_strtolower($combo['color'] ?? '')));
+            if (! $sizeVariant || ! $colorVariant) {
+                continue;
+            }
+
+            $row = \App\Models\ProductVariantCombination::updateOrCreate(
+                [
+                    'size_variant_id' => $sizeVariant->id,
+                    'color_variant_id' => $colorVariant->id,
+                ],
+                [
+                    'product_id' => $product->id,
+                    'stock' => (int) ($combo['stock'] ?? 0),
+                ]
+            );
+            $keptIds[] = $row->id;
+        }
+
+        // Remove combinations the admin unchecked.
+        $product->combinations()->whereNotIn('id', $keptIds)->delete();
     }
 
     /**

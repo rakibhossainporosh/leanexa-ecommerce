@@ -1,29 +1,5 @@
 import { Head, useForm, usePage, Link } from '@inertiajs/react';
-import JoditEditor from 'jodit-react';
-
-// Paste rich content straight in as clean HTML — never pop the "keep as HTML /
-// insert as text" dialog, whose "as text" option escaped tags into &lt;p&gt;
-// that then showed up literally on the storefront.
-const pasteBehaviour = {
-    askBeforePasteHTML: false,
-    askBeforePasteFromWord: false,
-    defaultActionOnPaste: 'insert_clear_html' as const,
-    processPasteHTML: true,
-};
-
-const descriptionEditorConfig = {
-    readonly: false,
-    height: 300,
-    placeholder: "Describe the product's features, materials and fit...",
-    ...pasteBehaviour,
-};
-
-const shortDescriptionEditorConfig = {
-    readonly: false,
-    height: 150,
-    placeholder: 'A brief summary shown near the top of the product page...',
-    ...pasteBehaviour,
-};
+import RichTextEditor from '@/components/rich-text-editor';
 import {
     ArrowLeft,
     Trash2,
@@ -104,8 +80,34 @@ export default function ProductForm({
         image: null as File | null,
         image_url: '',
         variants: (product?.variants || []).map(toFormVariant),
+        combinations: (product?.combination_rows || []) as { size: string; color: string; stock: number | string }[],
         _method: isEditing ? 'put' : 'post',
     });
+
+    // Distinct, named size and colour options drive the combination matrix.
+    const sizeOptions: string[] = Array.from(new Set(
+        data.variants.filter((v: any) => v.type === 'size' && (v.name || '').trim()).map((v: any) => v.name.trim())
+    ));
+    const colorOptions: string[] = Array.from(new Set(
+        data.variants.filter((v: any) => (v.type === 'color' || !v.type) && (v.name || '').trim()).map((v: any) => v.name.trim())
+    ));
+
+    const findCombo = (size: string, color: string) =>
+        data.combinations.find((c: any) => c.size === size && c.color === color);
+
+    const toggleCombo = (size: string, color: string, on: boolean) => {
+        if (on) {
+            if (!findCombo(size, color)) setData('combinations', [...data.combinations, { size, color, stock: 0 }]);
+        } else {
+            setData('combinations', data.combinations.filter((c: any) => !(c.size === size && c.color === color)));
+        }
+    };
+
+    const setComboStock = (size: string, color: string, stock: string) => {
+        setData('combinations', data.combinations.map((c: any) =>
+            c.size === size && c.color === color ? { ...c, stock } : c
+        ));
+    };
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -180,10 +182,10 @@ export default function ProductForm({
                                     <div className="space-y-2">
                                         <Label>Short Description</Label>
                                         <div className="rounded-md border">
-                                            <JoditEditor
+                                            <RichTextEditor
                                                 value={data.short_description}
-                                                config={shortDescriptionEditorConfig}
-                                                onBlur={(newContent) => setData('short_description', newContent)}
+                                                onChange={(html) => setData('short_description', html)}
+                                                placeholder="A brief summary shown near the top of the product page..."
                                             />
                                         </div>
                                         {errors.short_description && (
@@ -195,10 +197,10 @@ export default function ProductForm({
                                     <div className="space-y-2">
                                         <Label>Long Description</Label>
                                         <div className="rounded-md border">
-                                            <JoditEditor
+                                            <RichTextEditor
                                                 value={data.description}
-                                                config={descriptionEditorConfig}
-                                                onBlur={(newContent) => setData('description', newContent)}
+                                                onChange={(html) => setData('description', html)}
+                                                placeholder="Describe the product's features, materials and fit..."
                                             />
                                         </div>
                                         {errors.description && (
@@ -429,6 +431,7 @@ export default function ProductForm({
                                                     {
                                                         type: 'color',
                                                         name: '',
+                                                        size: '',
                                                         price: '',
                                                         stock: '',
                                                         sku: '',
@@ -456,10 +459,11 @@ export default function ProductForm({
                                                 <Table>
                                                     <TableHeader className="bg-muted/50">
                                                         <TableRow>
-                                                            <TableHead className="w-[30%] text-xs">Type & Name</TableHead>
-                                                            <TableHead className="w-[15%] text-xs">Price</TableHead>
-                                                            <TableHead className="w-[15%] text-xs">Stock</TableHead>
-                                                            <TableHead className="w-[20%] text-xs">SKU</TableHead>
+                                                            <TableHead className="w-[26%] text-xs">Type & Name</TableHead>
+                                                            <TableHead className="w-[12%] text-xs">Size</TableHead>
+                                                            <TableHead className="w-[12%] text-xs">Price</TableHead>
+                                                            <TableHead className="w-[12%] text-xs">Stock</TableHead>
+                                                            <TableHead className="w-[18%] text-xs">SKU</TableHead>
                                                             <TableHead className="w-[15%] text-center text-xs">Image</TableHead>
                                                             <TableHead className="w-[5%]"></TableHead>
                                                         </TableRow>
@@ -474,7 +478,8 @@ export default function ProductForm({
                                                                             onValueChange={(val) => {
                                                                                 const v = [...data.variants];
                                                                                 v[index].type = val;
-                                                                                // If switched to size, we might want to clear the image, but let's just let the controller handle it or ignore.
+                                                                                // A size-type variant carries no size field of its own.
+                                                                                if (val === 'size') v[index].size = '';
                                                                                 setData('variants', v);
                                                                             }}
                                                                         >
@@ -487,7 +492,7 @@ export default function ProductForm({
                                                                             </SelectContent>
                                                                         </Select>
                                                                         <Input
-                                                                            placeholder="e.g. Size 42"
+                                                                            placeholder={variant.type === 'size' ? 'e.g. 42' : 'e.g. Red'}
                                                                             value={variant.name}
                                                                             onChange={(e) => {
                                                                                 const v = [...data.variants];
@@ -498,6 +503,20 @@ export default function ProductForm({
                                                                             required
                                                                         />
                                                                     </div>
+                                                                </TableCell>
+                                                                <TableCell className="p-2 align-top">
+                                                                    {(!variant.type || variant.type === 'color') && (
+                                                                        <Input
+                                                                            placeholder="e.g. 42"
+                                                                            value={variant.size || ''}
+                                                                            onChange={(e) => {
+                                                                                const v = [...data.variants];
+                                                                                v[index].size = e.target.value;
+                                                                                setData('variants', v);
+                                                                            }}
+                                                                            className="h-9 text-sm bg-transparent"
+                                                                        />
+                                                                    )}
                                                                 </TableCell>
                                                                 <TableCell className="p-2 align-top">
                                                                     <Input
