@@ -46,6 +46,29 @@ import type { DataTableColumn } from '@/hooks/use-datatable';
 import AdminLayout from '@/layouts/admin-layout';
 
 /**
+ * Turn stored rich-text (HTML, or older escaped-HTML) into plain readable text
+ * so the admin product view never shows raw tags.
+ */
+function stripHtml(input?: string | null): string {
+    if (!input) return '';
+    const decode = (s: string) => {
+        const el = document.createElement('textarea');
+        el.innerHTML = s;
+        return el.value;
+    };
+    const toText = (s: string) => {
+        const doc = new DOMParser().parseFromString(s, 'text/html');
+        return doc.body.textContent || '';
+    };
+    let text = toText(input);
+    // Escaped HTML decodes to visible tags on the first pass — strip them once more.
+    if (/<[a-z!/][\s\S]*>/i.test(text)) {
+        text = toText(decode(text));
+    }
+    return text.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/**
  * Column definitions sent to the yajra/laravel-datatables endpoint.
  * Hidden columns (slug, sku, brand.name) only widen the global search.
  */
@@ -476,19 +499,19 @@ export default function ProductsIndex() {
                                     </div>
                                 </div>
 
-                                {/* Short Description (rich text) */}
-                                {viewingProduct.short_description && (
+                                {/* Short Description — plain text, no HTML tags */}
+                                {stripHtml(viewingProduct.short_description) && (
                                     <div>
                                         <p className="text-muted-foreground mb-1 text-[11px] font-semibold uppercase tracking-wide">Short Description</p>
-                                        <div className="prose prose-sm max-w-none text-sm leading-relaxed dark:prose-invert" dangerouslySetInnerHTML={{ __html: viewingProduct.short_description }} />
+                                        <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{stripHtml(viewingProduct.short_description)}</p>
                                     </div>
                                 )}
 
-                                {/* Long Description (rich text) */}
-                                {viewingProduct.description && (
+                                {/* Long Description — plain text, no HTML tags */}
+                                {stripHtml(viewingProduct.description) && (
                                     <div>
                                         <p className="text-muted-foreground mb-1 text-[11px] font-semibold uppercase tracking-wide">Long Description</p>
-                                        <div className="prose prose-sm max-w-none text-sm leading-relaxed dark:prose-invert" dangerouslySetInnerHTML={{ __html: viewingProduct.description }} />
+                                        <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{stripHtml(viewingProduct.description)}</p>
                                     </div>
                                 )}
 
