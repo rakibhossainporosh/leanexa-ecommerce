@@ -727,7 +727,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                             </a>
                         </div>
 
-                        <div className="flex w-full flex-col items-center gap-1 text-center sm:flex-row sm:justify-between sm:gap-4 sm:text-left">
+                        <div className="w-full text-center">
                             <p>
                                 {(general_settings?.footer_copyright || '© {year} {store}. All Rights Reserved.')
                                     .replace('{year}', String(new Date().getFullYear()))
