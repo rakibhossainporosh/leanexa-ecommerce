@@ -26,7 +26,7 @@ export default function Contact({ contact }: { contact?: ContactInfo }) {
             <div className="container mx-auto px-4 py-16 max-w-5xl">
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
-                    <p className="text-lg text-muted-foreground">{info.subtitle || "We'd love to hear from you. Please reach out with any questions or feedback."}</p>
+                    {info.subtitle && <p className="text-lg text-muted-foreground">{info.subtitle}</p>}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-12">
@@ -55,37 +55,43 @@ export default function Contact({ contact }: { contact?: ContactInfo }) {
                         </form>
                     </div>
 
-                    {/* Contact Info */}
+                    {/* Contact Info — each block only shows when the admin has set it */}
                     <div className="space-y-8 flex flex-col justify-center">
-                        <div className="flex items-start gap-4">
-                            <div className="bg-shop-primary/10 p-3 rounded-full text-shop-primary">
-                                <MapPin className="w-6 h-6" />
+                        {info.location && (
+                            <div className="flex items-start gap-4">
+                                <div className="bg-shop-primary/10 p-3 rounded-full text-shop-primary">
+                                    <MapPin className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg">Our Location</h4>
+                                    <p className="text-muted-foreground mt-1 whitespace-pre-line">{info.location}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="font-bold text-lg">Our Location</h4>
-                                <p className="text-muted-foreground mt-1 whitespace-pre-line">{info.location || '123 E-commerce St.\nTech City, TC 10101'}</p>
-                            </div>
-                        </div>
-                        
-                        <div className="flex items-start gap-4">
-                            <div className="bg-shop-primary/10 p-3 rounded-full text-shop-primary">
-                                <Phone className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-lg">Phone Number</h4>
-                                <p className="text-muted-foreground mt-1 whitespace-pre-line">{info.phone || '+880 1234 567890\nMon-Fri, 9am-6pm'}</p>
-                            </div>
-                        </div>
+                        )}
 
-                        <div className="flex items-start gap-4">
-                            <div className="bg-shop-primary/10 p-3 rounded-full text-shop-primary">
-                                <Mail className="w-6 h-6" />
+                        {info.phone && (
+                            <div className="flex items-start gap-4">
+                                <div className="bg-shop-primary/10 p-3 rounded-full text-shop-primary">
+                                    <Phone className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg">Phone Number</h4>
+                                    <p className="text-muted-foreground mt-1 whitespace-pre-line">{info.phone}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="font-bold text-lg">Email Address</h4>
-                                <p className="text-muted-foreground mt-1 whitespace-pre-line">{info.email || 'support@eshop.com\ncontact@eshop.com'}</p>
+                        )}
+
+                        {info.email && (
+                            <div className="flex items-start gap-4">
+                                <div className="bg-shop-primary/10 p-3 rounded-full text-shop-primary">
+                                    <Mail className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg">Email Address</h4>
+                                    <p className="text-muted-foreground mt-1 whitespace-pre-line">{info.email}</p>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
