@@ -1,5 +1,6 @@
 import React from 'react';
 import { Head, useForm, router, Link } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -102,6 +103,8 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
         e.preventDefault();
         put('/admin/page-settings', {
             preserveScroll: true,
+            onSuccess: () => toast.success('Page settings saved.'),
+            onError: () => toast.error('Please check the form for errors.'),
         });
     };
 
@@ -517,6 +520,7 @@ function CustomPagesManager({ pages }: { pages: CustomPageRow[] }) {
             onSuccess: () => {
                 reset();
                 setShowForm(false);
+                toast.success(editingId ? 'Page updated.' : 'Page created.');
                 setEditingId(null);
             },
         };
@@ -529,7 +533,10 @@ function CustomPagesManager({ pages }: { pages: CustomPageRow[] }) {
 
     const remove = (p: CustomPageRow) => {
         if (confirm(`Delete the page "${p.title}"? This cannot be undone.`)) {
-            router.delete(`/admin/custom-pages/${p.id}`, { preserveScroll: true });
+            router.delete(`/admin/custom-pages/${p.id}`, {
+                preserveScroll: true,
+                onSuccess: () => toast.success('Page deleted.'),
+            });
         }
     };
 
