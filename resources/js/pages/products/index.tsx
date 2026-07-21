@@ -156,6 +156,10 @@ function SidebarCategoryItem({ category }: { category: any }) {
 
 function ProductCard({ product }: { product: Product }) {
     const { formatPrice } = useCurrency();
+    // Read wishlist state once during render — usePage() is a hook and must not
+    // be called inside the click handler (it threw and aborted the request).
+    const wishlistItems = (usePage().props.wishlistItems as number[]) ?? [];
+    const isWishlisted = wishlistItems.includes(product.id);
     const [activeImage, setActiveImage] = useState<string | null>(null);
     const defaultImage = product.images && product.images.length > 0 ? product.images[0].image_path : null;
     const displayImage = activeImage || defaultImage;
@@ -196,21 +200,20 @@ function ProductCard({ product }: { product: Product }) {
                 <button
                     onClick={(e) => {
                         e.preventDefault();
-                        const isWishlisted = (usePage().props.wishlistItems as number[])?.includes(product.id);
                         const actionWord = isWishlisted ? 'Removed from' : 'Added to';
-                        router.post(`/wishlist/${product.id}`, {}, { 
+                        router.post(`/wishlist/${product.id}`, {}, {
                             preserveScroll: true,
                             onSuccess: () => toast.success(`${actionWord} wishlist`)
                         });
                     }}
                     aria-label="Wishlist"
                     className={`flex h-9 w-9 items-center justify-center rounded-full shadow-md transition-colors ${
-                        (usePage().props.wishlistItems as number[])?.includes(product.id)
+                        isWishlisted
                             ? 'bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/40'
                             : 'bg-background text-muted-foreground hover:bg-shop-primary hover:text-white'
                     }`}
                 >
-                    <Heart className={`h-4 w-4 ${(usePage().props.wishlistItems as number[])?.includes(product.id) ? 'fill-current' : ''}`} />
+                    <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} />
                 </button>
                 {[
                     { icon: Eye, label: 'Quick view' },
