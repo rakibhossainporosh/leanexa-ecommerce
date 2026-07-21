@@ -220,8 +220,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('orders-data', [\App\Http\Controllers\Admin\OrderController::class, 'data'])->name('orders.data');
             Route::get('orders/{order}/invoice', [\App\Http\Controllers\Admin\OrderController::class, 'invoice'])->name('orders.invoice');
             Route::resource('orders', \App\Http\Controllers\Admin\OrderController::class)->only(['index', 'show', 'update', 'destroy']);
-            Route::resource('abandoned-carts', \App\Http\Controllers\Admin\AbandonedCartController::class)->only(['index', 'destroy']);
-            Route::post('abandoned-carts/{cart}/send-email', [\App\Http\Controllers\Admin\AbandonedCartController::class, 'sendEmail'])->name('abandoned-carts.send-email');
+            Route::resource('abandoned-carts', \App\Http\Controllers\Admin\AbandonedCartController::class)
+                ->only(['index', 'destroy'])
+                ->parameters(['abandoned-carts' => 'cart']);
             Route::get('sales-report', [\App\Http\Controllers\Admin\SalesReportController::class, 'index'])->name('sales-report');
 
             // Home Page Layout CMS

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Mail, Trash2, ShoppingBag, Eye } from 'lucide-react';
+import { Trash2, ShoppingBag, Eye } from 'lucide-react';
 import { useCurrency } from '@/hooks/use-currency';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -18,14 +18,6 @@ export default function AbandonedCartsIndex({ carts, settings }: { carts: any, s
         if (confirm('Are you sure you want to remove this abandoned cart?')) {
             router.delete(`/admin/abandoned-carts/${id}`, {
                 onSuccess: () => toast.success('Cart removed successfully.')
-            });
-        }
-    };
-
-    const sendEmail = (id: number) => {
-        if (confirm('Send reminder email to this customer?')) {
-            router.post(`/admin/abandoned-carts/${id}/send-email`, {}, {
-                onSuccess: () => toast.success('Reminder email sent successfully.')
             });
         }
     };
@@ -176,17 +168,8 @@ export default function AbandonedCartsIndex({ carts, settings }: { carts: any, s
                                                         </DialogContent>
                                                     </Dialog>
 
-                                                    <Button 
-                                                        variant="outline" 
-                                                        size="sm"
-                                                        onClick={() => sendEmail(cart.id)}
-                                                        disabled={email === 'No Email'}
-                                                        title="Send Reminder Email"
-                                                    >
-                                                        <Mail className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button 
-                                                        variant="destructive" 
+                                                    <Button
+                                                        variant="destructive"
                                                         size="sm"
                                                         onClick={() => deleteCart(cart.id)}
                                                         title="Remove Cart"
