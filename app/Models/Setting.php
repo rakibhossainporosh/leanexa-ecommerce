@@ -177,6 +177,10 @@ class Setting extends Model
     public static function pageDefaults(): array
     {
         return [
+            'contact_subtitle' => "We'd love to hear from you. Please reach out with any questions or feedback.",
+            'contact_location' => "123 E-commerce St.\nTech City, TC 10101",
+            'contact_phone' => "+880 1234 567890\nMon-Fri, 9am-6pm",
+            'contact_email' => "support@eshop.com\ncontact@eshop.com",
             'about_intro' => '<p>Welcome to EShop. We are dedicated to providing you with the best electronics, gadgets, and accessories. Our mission is to bring high-quality tech products directly to your door with exceptional customer service.</p>',
             'about_features' => [
                 ['title' => 'Quality First', 'description' => 'We ensure all our products meet strict quality standards.'],

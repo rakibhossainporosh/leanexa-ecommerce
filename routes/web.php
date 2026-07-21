@@ -54,7 +54,18 @@ Route::get('/about', function () {
         'features' => $pages['about_features'] ?? [],
     ]);
 })->name('about');
-Route::get('/contact', function () { return inertia('contact'); })->name('contact');
+Route::get('/contact', function () {
+    $pages = \App\Models\Setting::pages();
+
+    return inertia('contact', [
+        'contact' => [
+            'subtitle' => $pages['contact_subtitle'] ?? '',
+            'location' => $pages['contact_location'] ?? '',
+            'phone' => $pages['contact_phone'] ?? '',
+            'email' => $pages['contact_email'] ?? '',
+        ],
+    ]);
+})->name('contact');
 Route::get('/our-story', function () { 
     return inertia('our-story', ['page_data' => \App\Models\Setting::pages()['our_story']]); 
 })->name('our-story');

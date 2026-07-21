@@ -2,14 +2,17 @@ import { Head } from '@inertiajs/react';
 import CustomerLayout from '@/layouts/customer-layout';
 import { Mail, MapPin, Phone } from 'lucide-react';
 
-export default function Contact() {
+type ContactInfo = { subtitle?: string; location?: string; phone?: string; email?: string };
+
+export default function Contact({ contact }: { contact?: ContactInfo }) {
+    const info = contact ?? {};
     return (
         <CustomerLayout>
             <Head title="Contact Us" />
             <div className="container mx-auto px-4 py-16 max-w-5xl">
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
-                    <p className="text-lg text-muted-foreground">We'd love to hear from you. Please reach out with any questions or feedback.</p>
+                    <p className="text-lg text-muted-foreground">{info.subtitle || "We'd love to hear from you. Please reach out with any questions or feedback."}</p>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-12">
@@ -43,7 +46,7 @@ export default function Contact() {
                             </div>
                             <div>
                                 <h4 className="font-bold text-lg">Our Location</h4>
-                                <p className="text-muted-foreground mt-1">123 E-commerce St.<br />Tech City, TC 10101</p>
+                                <p className="text-muted-foreground mt-1 whitespace-pre-line">{info.location || '123 E-commerce St.\nTech City, TC 10101'}</p>
                             </div>
                         </div>
                         
@@ -53,7 +56,7 @@ export default function Contact() {
                             </div>
                             <div>
                                 <h4 className="font-bold text-lg">Phone Number</h4>
-                                <p className="text-muted-foreground mt-1">+880 1234 567890<br />Mon-Fri, 9am-6pm</p>
+                                <p className="text-muted-foreground mt-1 whitespace-pre-line">{info.phone || '+880 1234 567890\nMon-Fri, 9am-6pm'}</p>
                             </div>
                         </div>
 
@@ -63,7 +66,7 @@ export default function Contact() {
                             </div>
                             <div>
                                 <h4 className="font-bold text-lg">Email Address</h4>
-                                <p className="text-muted-foreground mt-1">support@eshop.com<br />contact@eshop.com</p>
+                                <p className="text-muted-foreground mt-1 whitespace-pre-line">{info.email || 'support@eshop.com\ncontact@eshop.com'}</p>
                             </div>
                         </div>
                     </div>

@@ -21,6 +21,10 @@ interface Feature {
 
 interface PageSettingsProps {
     pages: {
+        contact_subtitle: string;
+        contact_location: string;
+        contact_phone: string;
+        contact_email: string;
         about_intro: string;
         about_features: Feature[];
         our_story: string;
@@ -53,6 +57,10 @@ interface CustomPageRow {
 
 export default function PageSettingsIndex({ pages, customPages = [] }: PageSettingsProps) {
     const { data, setData, put, processing, errors } = useForm({
+        contact_subtitle: pages.contact_subtitle || '',
+        contact_location: pages.contact_location || '',
+        contact_phone: pages.contact_phone || '',
+        contact_email: pages.contact_email || '',
         about_intro: pages.about_intro || '',
         about_features: pages.about_features || [],
         our_story: pages.our_story || '',
@@ -129,6 +137,7 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
     const TABS = [
         { id: 'auth', label: 'Register & Login' },
         { id: 'about', label: 'About Us' },
+        { id: 'contact', label: 'Contact Us' },
         { id: 'story', label: 'Our Story' },
         { id: 'policies', label: 'Policies' },
         { id: 'faq', label: 'FAQ' },
@@ -279,6 +288,40 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
                         </CardContent>
                     </Card>
                 </div>
+                )}
+
+                {activeTab === 'contact' && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Contact Us Page</CardTitle>
+                        <CardDescription>The intro line and contact details shown on the Contact Us page.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="contact_subtitle">Subtitle</Label>
+                            <Textarea id="contact_subtitle" rows={2} value={data.contact_subtitle} onChange={(e) => setData('contact_subtitle', e.target.value)} placeholder="We'd love to hear from you..." />
+                            {errors.contact_subtitle && <p className="text-sm text-red-500">{errors.contact_subtitle}</p>}
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="contact_location">Our Location</Label>
+                                <Textarea id="contact_location" rows={3} value={data.contact_location} onChange={(e) => setData('contact_location', e.target.value)} placeholder={'123 E-commerce St.\nTech City'} />
+                                <p className="text-muted-foreground text-xs">One line per row.</p>
+                                {errors.contact_location && <p className="text-sm text-red-500">{errors.contact_location}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="contact_phone">Phone Number</Label>
+                                <Textarea id="contact_phone" rows={3} value={data.contact_phone} onChange={(e) => setData('contact_phone', e.target.value)} placeholder={'+880 1234 567890\nMon-Fri, 9am-6pm'} />
+                                {errors.contact_phone && <p className="text-sm text-red-500">{errors.contact_phone}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="contact_email">Email Address</Label>
+                                <Textarea id="contact_email" rows={3} value={data.contact_email} onChange={(e) => setData('contact_email', e.target.value)} placeholder={'support@eshop.com\ncontact@eshop.com'} />
+                                {errors.contact_email && <p className="text-sm text-red-500">{errors.contact_email}</p>}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
                 )}
 
                 {activeTab === 'story' && (
