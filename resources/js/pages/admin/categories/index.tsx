@@ -1,4 +1,5 @@
 import { Head, useForm, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ export default function CategoriesIndex({ categories }: { categories: any[] }) {
             put(`/admin/categories/${editingCategory.id}`, {
                 onSuccess: () => {
                     setIsOpen(false);
+                    toast.success('Category updated successfully.');
                 },
             });
         } else {
@@ -52,6 +54,7 @@ export default function CategoriesIndex({ categories }: { categories: any[] }) {
                 onSuccess: () => {
                     setIsOpen(false);
                     reset();
+                    toast.success('Category created successfully.');
                 },
             });
         }
@@ -59,7 +62,9 @@ export default function CategoriesIndex({ categories }: { categories: any[] }) {
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this category?')) {
-            router.delete(`/admin/categories/${id}`);
+            router.delete(`/admin/categories/${id}`, {
+                onSuccess: () => toast.success('Category deleted successfully.'),
+            });
         }
     };
 

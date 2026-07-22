@@ -1,4 +1,5 @@
 import { Head, useForm, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,15 +71,27 @@ export default function BrandsIndex({ brands }: { brands: any[] }) {
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingBrand) {
-            post(`/admin/brands/${editingBrand.id}`, { onSuccess: () => setIsOpen(false) });
+            post(`/admin/brands/${editingBrand.id}`, {
+                onSuccess: () => {
+                    setIsOpen(false);
+                    toast.success('Brand updated successfully.');
+                },
+            });
         } else {
-            post('/admin/brands', { onSuccess: () => setIsOpen(false) });
+            post('/admin/brands', {
+                onSuccess: () => {
+                    setIsOpen(false);
+                    toast.success('Brand created successfully.');
+                },
+            });
         }
     };
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this brand?')) {
-            router.delete(`/admin/brands/${id}`);
+            router.delete(`/admin/brands/${id}`, {
+                onSuccess: () => toast.success('Brand deleted successfully.'),
+            });
         }
     };
 
@@ -86,7 +99,10 @@ export default function BrandsIndex({ brands }: { brands: any[] }) {
         router.put(
             `/admin/brands/${brand.id}`,
             { name: brand.name, description: brand.description, website: brand.website, is_active: !brand.is_active },
-            { preserveScroll: true },
+            {
+                preserveScroll: true,
+                onSuccess: () => toast.success(brand.is_active ? 'Brand hidden from store.' : 'Brand is now visible in store.'),
+            },
         );
     };
 
