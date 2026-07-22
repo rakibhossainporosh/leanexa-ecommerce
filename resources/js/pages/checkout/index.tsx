@@ -78,22 +78,23 @@ export default function CheckoutIndex({ cart, auth, appliedCoupon, shipping, tax
     };
 
     const handleBlur = () => {
-        if (!auth?.user) {
-            fetch('/cart/sync-guest', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    guest_name: data.name,
-                    guest_email: data.email,
-                    guest_phone: data.phone,
-                })
-            }).catch(() => {});
-        }
+        // Sync contact details onto the cart for guests AND logged-in customers,
+        // so an abandoned cart keeps the phone number typed at checkout
+        // (customers have no phone on their account).
+        fetch('/cart/sync-guest', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                guest_name: data.name,
+                guest_email: data.email,
+                guest_phone: data.phone,
+            })
+        }).catch(() => {});
     };
 
     return (
