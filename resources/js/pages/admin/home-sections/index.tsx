@@ -231,17 +231,6 @@ export default function HomeSectionsIndex({ sections, categories }: { sections: 
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Display Style</Label>
-                                    <Select value={data.display_style} onValueChange={(v) => setData('display_style', v)}>
-                                        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="grid">Grid</SelectItem>
-                                            <SelectItem value="carousel">Carousel</SelectItem>
-                                            <SelectItem value="list">List</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
                                     <Label>Products to Show</Label>
                                     <Select value={String(data.product_limit)} onValueChange={(v) => setData('product_limit', Number(v))}>
                                         <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
@@ -289,7 +278,6 @@ export default function HomeSectionsIndex({ sections, categories }: { sections: 
                                         <span className="font-medium">{s.title}</span>
                                         <Badge variant="outline" className="capitalize">{s.type}</Badge>
                                         <Badge variant="secondary" className="capitalize">{s.product_source}</Badge>
-                                        <Badge variant="secondary" className="capitalize">{s.display_style}</Badge>
                                     </div>
                                     <p className="text-muted-foreground text-xs">
                                         Shows {s.product_limit}

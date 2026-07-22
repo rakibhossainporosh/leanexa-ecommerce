@@ -159,12 +159,9 @@ export default function PageSettingsIndex({ pages, customPages = [] }: PageSetti
                         Manage the content of your static pages.
                     </p>
                 </div>
-                {activeTab !== 'pages' && (
-                    <Button onClick={submit} disabled={processing}>Save Changes</Button>
-                )}
             </div>
 
-            {/* Tab bar — one Save button (top) submits every tab's fields. */}
+            {/* Tab bar — the single Save button at the bottom submits every tab's fields. */}
             <div className="mb-6 flex flex-wrap gap-1 border-b border-border">
                 {TABS.map((t) => (
                     <button
