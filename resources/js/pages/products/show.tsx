@@ -52,18 +52,33 @@ export default function ProductShow({ product }: { product: any }) {
     const sizeAvailableForColor = (sizeId: number, colorId: number | null): boolean =>
         !hasMatrix || combinations.some((c) => c.size_variant_id === sizeId && c.color_variant_id === colorId && c.stock > 0);
 
+    // A colour variant can carry its own size list (its "size" field, comma
+    // separated) — those sizes belong to that colour and are offered as size
+    // options whenever the colour is selected.
+    const colorSizesOf = (color: any): string[] => {
+        const raw = (color?.size ?? '').toString().trim();
+        if (!raw) return [];
+        return raw.split(',').map((s: string) => s.trim()).filter(Boolean);
+    };
+
     // For a matrix, start on the first in-stock pair so the initial state is valid.
     const firstCombo = hasMatrix ? (combinations.find((c) => c.stock > 0) || combinations[0]) : null;
 
+    // No colour is pre-selected: the customer picks one, and only then do that
+    // colour's own sizes replace the standalone size list.
     const [selectedColorId, setSelectedColorId] = useState<number | null>(
-        firstCombo ? firstCombo.color_variant_id : (colorVariants.length > 0 ? colorVariants[0].id : null)
+        firstCombo ? firstCombo.color_variant_id : null
     );
-    const [selectedSizeId, setSelectedSizeId] = useState<number | null>(
-        firstCombo ? firstCombo.size_variant_id : (sizeVariants.length > 0 ? sizeVariants[0].id : null)
-    );
+    const [selectedSizeId, setSelectedSizeId] = useState<number | null>(() => {
+        if (firstCombo) return firstCombo.size_variant_id;
+        return sizeVariants.length > 0 ? sizeVariants[0].id : null;
+    });
+    // The chosen size when it comes from the colour's own size list.
+    const [selectedColorSize, setSelectedColorSize] = useState<string | null>(null);
 
     // In matrix mode, keep the two axes consistent: picking one auto-moves the
     // other to a valid, in-stock pair when the current pick becomes invalid.
+
     const pickColor = (colorId: number) => {
         setSelectedColorId(colorId);
         if (hasMatrix && !sizeAvailableForColor(selectedSizeId as number, colorId)) {
@@ -71,9 +86,22 @@ export default function ProductShow({ product }: { product: any }) {
                 || combinations.find((c) => c.color_variant_id === colorId);
             if (alt) setSelectedSizeId(alt.size_variant_id);
         }
+        // A colour with its own size list switches the size selection to its
+        // first size; otherwise fall back to the standalone size variants.
+        if (!hasMatrix) {
+            const sizes = colorSizesOf(colorVariants.find((v: any) => v.id === colorId));
+            if (sizes.length > 0) {
+                setSelectedColorSize(sizes[0]);
+                setSelectedSizeId(null);
+            } else {
+                setSelectedColorSize(null);
+                if (!selectedSizeId && sizeVariants.length > 0) setSelectedSizeId(sizeVariants[0].id);
+            }
+        }
     };
     const pickSize = (sizeId: number) => {
         setSelectedSizeId(sizeId);
+        setSelectedColorSize(null);
         if (hasMatrix && !colorAvailableForSize(selectedColorId as number, sizeId)) {
             const alt = combinations.find((c) => c.size_variant_id === sizeId && c.stock > 0)
                 || combinations.find((c) => c.size_variant_id === sizeId);
@@ -97,6 +125,8 @@ export default function ProductShow({ product }: { product: any }) {
 
     const selectedColor = colorVariants.find((v: any) => v.id === selectedColorId);
     const selectedSize = sizeVariants.find((v: any) => v.id === selectedSizeId);
+    // Sizes offered by the currently selected colour (from its own size field).
+    const currentColorSizes = hasMatrix ? [] : colorSizesOf(selectedColor);
     
     const displayPrice = selectedSize?.price ? selectedSize.price : (selectedColor?.price ? selectedColor.price : product.price);
     
@@ -320,7 +350,7 @@ export default function ProductShow({ product }: { product: any }) {
                             </div>
                         )}
 
-                        {sizeVariants.length > 0 && (
+                        {(sizeVariants.length > 0 || currentColorSizes.length > 0) && (
                             <div className="mb-6">
                                 <div className="flex justify-between items-center mb-3">
                                     <h3 className="text-sm font-medium">Select Size</h3>
@@ -395,8 +425,30 @@ export default function ProductShow({ product }: { product: any }) {
                                     </Dialog>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                    {sizeVariants.map((variant: any) => {
-                                        const disabled = hasMatrix ? !sizeAvailableForColor(variant.id, selectedColorId) : variant.stock <= 0;
+                                    {/* A selected colour shows only its own sizes;
+                                        otherwise the standalone size variants show. */}
+                                    {currentColorSizes.length > 0 ? (
+                                        currentColorSizes.map((size: string) => (
+                                            <button
+                                                key={`color-size-${size}`}
+                                                onClick={() => {
+                                                    setSelectedColorSize(size);
+                                                    setSelectedSizeId(null);
+                                                }}
+                                                className={`px-4 py-2 text-sm rounded-lg border transition-all ${
+                                                    selectedColorSize === size && !selectedSizeId
+                                                    ? 'border-[#00704A] bg-[#00704A]/5 text-[#00704A] font-medium'
+                                                    : 'border-border hover:border-[#00704A]/50'
+                                                }`}
+                                            >
+                                                {size}
+                                            </button>
+                                        ))
+                                    ) : (
+                                    sizeVariants.map((variant: any) => {
+                                        const disabled = hasMatrix
+                                            ? !sizeAvailableForColor(variant.id, selectedColorId)
+                                            : variant.stock <= 0;
                                         return (
                                         <button
                                             key={variant.id}
@@ -413,11 +465,12 @@ export default function ProductShow({ product }: { product: any }) {
                                             {variant.name}
                                         </button>
                                         );
-                                    })}
+                                    })
+                                    )}
                                 </div>
                             </div>
                         )}
-                        
+
                         <div className="mt-6 mb-8">
                             <div className="flex border-b border-border">
                                 <button
