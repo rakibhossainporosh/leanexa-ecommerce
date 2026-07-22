@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import {
     Users,
     Eye,
@@ -66,7 +67,7 @@ export default function CustomersIndex() {
             preserveScroll: true,
             // The table feeds itself from /admin/customers-data rather than
             // Inertia props, so it has to be told to refetch.
-            onSuccess: () => reload(),
+            onSuccess: () => { reload(); toast.success('Customer deleted successfully.'); },
         });
     };
 

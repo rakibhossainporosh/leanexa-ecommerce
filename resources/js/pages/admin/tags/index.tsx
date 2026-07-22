@@ -1,4 +1,5 @@
 import { Head, useForm, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,7 @@ export default function TagsIndex({ tags }: { tags: any[] }) {
             put(`/admin/tags/${editingTag.id}`, {
                 onSuccess: () => {
                     setIsOpen(false);
+                    toast.success('Tag updated successfully.');
                 },
             });
         } else {
@@ -44,6 +46,7 @@ export default function TagsIndex({ tags }: { tags: any[] }) {
                 onSuccess: () => {
                     setIsOpen(false);
                     reset();
+                    toast.success('Tag created successfully.');
                 },
             });
         }
@@ -51,7 +54,7 @@ export default function TagsIndex({ tags }: { tags: any[] }) {
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this tag?')) {
-            router.delete(`/admin/tags/${id}`);
+            router.delete(`/admin/tags/${id}`, { onSuccess: () => toast.success('Tag deleted successfully.') });
         }
     };
 

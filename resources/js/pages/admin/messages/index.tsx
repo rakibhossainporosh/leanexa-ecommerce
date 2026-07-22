@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,12 +22,12 @@ export default function MessagesIndex({
     unreadCount?: number;
 }) {
     const toggleRead = (m: Message) => {
-        router.put(`/admin/messages/${m.id}`, {}, { preserveScroll: true });
+        router.put(`/admin/messages/${m.id}`, {}, { preserveScroll: true, onSuccess: () => toast.success(m.is_read ? 'Marked as unread.' : 'Marked as read.') });
     };
 
     const remove = (m: Message) => {
         if (confirm(`Delete the message from ${m.name}? This cannot be undone.`)) {
-            router.delete(`/admin/messages/${m.id}`, { preserveScroll: true });
+            router.delete(`/admin/messages/${m.id}`, { preserveScroll: true, onSuccess: () => toast.success('Message deleted.') });
         }
     };
 

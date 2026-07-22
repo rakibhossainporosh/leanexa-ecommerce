@@ -1,4 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { toast } from 'sonner';
 import {
     Eye,
     List,
@@ -136,7 +137,7 @@ export default function OrdersIndex() {
             preserveScroll: true,
             // The table feeds itself from /admin/orders-data rather than Inertia
             // props, so it has to be told to refetch.
-            onSuccess: () => reload(),
+            onSuccess: () => { reload(); toast.success('Order deleted successfully.'); },
         });
     };
 

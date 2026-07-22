@@ -1,4 +1,5 @@
 import { Head, useForm, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,20 +54,20 @@ export default function CouponsIndex({ coupons }: { coupons: any[] }) {
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingCoupon) {
-            put(`/admin/coupons/${editingCoupon.id}`, { onSuccess: () => setIsOpen(false) });
+            put(`/admin/coupons/${editingCoupon.id}`, { onSuccess: () => { setIsOpen(false); toast.success('Coupon updated successfully.'); } });
         } else {
-            post('/admin/coupons', { onSuccess: () => setIsOpen(false) });
+            post('/admin/coupons', { onSuccess: () => { setIsOpen(false); toast.success('Coupon created successfully.'); } });
         }
     };
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this coupon?')) {
-            router.delete(`/admin/coupons/${id}`);
+            router.delete(`/admin/coupons/${id}`, { onSuccess: () => toast.success('Coupon deleted successfully.') });
         }
     };
 
     const toggleStatus = (coupon: any) => {
-        router.put(`/admin/coupons/${coupon.id}`, { ...coupon, is_active: !coupon.is_active }, { preserveScroll: true });
+        router.put(`/admin/coupons/${coupon.id}`, { ...coupon, is_active: !coupon.is_active }, { preserveScroll: true, onSuccess: () => toast.success('Coupon status updated.') });
     };
 
     return (

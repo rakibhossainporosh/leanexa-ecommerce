@@ -1,4 +1,5 @@
 import { Head, useForm, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,7 +53,7 @@ export default function UsersIndex({
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        const opts = { onSuccess: () => setIsOpen(false), preserveScroll: true };
+        const opts = { onSuccess: () => { setIsOpen(false); toast.success(editing ? 'Admin updated successfully.' : 'Admin created successfully.'); }, preserveScroll: true };
         if (editing) {
             put(`/admin/users/${editing.id}`, opts);
         } else {
@@ -62,7 +63,7 @@ export default function UsersIndex({
 
     const remove = (u: UserRow) => {
         if (confirm(`Delete ${u.name}? This cannot be undone.`)) {
-            router.delete(`/admin/users/${u.id}`, { preserveScroll: true });
+            router.delete(`/admin/users/${u.id}`, { preserveScroll: true, onSuccess: () => toast.success('Admin deleted successfully.') });
         }
     };
 

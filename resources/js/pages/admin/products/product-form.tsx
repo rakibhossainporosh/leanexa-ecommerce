@@ -1,4 +1,5 @@
 import { Head, useForm, usePage, Link } from '@inertiajs/react';
+import { toast } from 'sonner';
 import RichTextEditor from '@/components/rich-text-editor';
 import {
     ArrowLeft,
@@ -122,7 +123,10 @@ export default function ProductForm({
             }),
         }));
         // On success the controller redirects to the products list.
-        post(url, { forceFormData: true });
+        post(url, {
+            forceFormData: true,
+            onSuccess: () => toast.success(isEditing ? 'Product updated successfully.' : 'Product created successfully.'),
+        });
     };
 
     const variantError = (index: number) =>

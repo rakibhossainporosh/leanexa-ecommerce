@@ -1,4 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { toast } from 'sonner';
 import {
     Plus,
     Trash2,
@@ -145,7 +146,7 @@ export default function ProductsIndex() {
         if (confirm('Are you sure you want to delete this product?')) {
             router.delete(`/admin/products/${id}`, {
                 preserveScroll: true,
-                onSuccess: () => loadData(),
+                onSuccess: () => { loadData(); toast.success('Product deleted successfully.'); },
             });
         }
     };

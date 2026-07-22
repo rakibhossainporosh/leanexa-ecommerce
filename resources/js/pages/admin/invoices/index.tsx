@@ -1,4 +1,5 @@
 import { Head, useForm, router, usePage } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -188,6 +189,7 @@ export default function InvoicesIndex({ invoices, currencies }: { invoices: any,
             onSuccess: () => {
                 setIsOpen(false);
                 resetAll();
+                toast.success(editingInvoice ? 'Invoice updated successfully.' : 'Invoice created successfully.');
             },
         };
         if (editingInvoice) {
@@ -199,7 +201,7 @@ export default function InvoicesIndex({ invoices, currencies }: { invoices: any,
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this invoice?')) {
-            router.delete(`/admin/invoices/${id}`);
+            router.delete(`/admin/invoices/${id}`, { onSuccess: () => toast.success('Invoice deleted successfully.') });
         }
     };
 

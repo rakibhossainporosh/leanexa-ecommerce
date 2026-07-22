@@ -1,4 +1,5 @@
 import { Head, useForm, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,7 +89,7 @@ export default function HomeSectionsIndex({ sections, categories }: { sections: 
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        const opts = { onSuccess: () => setIsOpen(false), preserveScroll: true };
+        const opts = { onSuccess: () => { setIsOpen(false); toast.success(editing ? 'Section updated successfully.' : 'Section created successfully.'); }, preserveScroll: true };
         if (editing) {
             put(`/admin/home-sections/${editing.id}`, opts);
         } else {
@@ -98,7 +99,7 @@ export default function HomeSectionsIndex({ sections, categories }: { sections: 
 
     const remove = (id: number) => {
         if (confirm('Delete this section? Its product assignments will be removed.')) {
-            router.delete(`/admin/home-sections/${id}`, { preserveScroll: true });
+            router.delete(`/admin/home-sections/${id}`, { preserveScroll: true, onSuccess: () => toast.success('Section deleted successfully.') });
         }
     };
 
@@ -106,7 +107,7 @@ export default function HomeSectionsIndex({ sections, categories }: { sections: 
         router.put(
             `/admin/home-sections/${s.id}`,
             { ...s, subtitle: s.subtitle ?? '', view_all_link: s.view_all_link ?? '', is_active: !s.is_active },
-            { preserveScroll: true },
+            { preserveScroll: true, onSuccess: () => toast.success('Section visibility updated.') },
         );
     };
 
@@ -367,11 +368,11 @@ function ManageProductsDialog({ section, onClose }: { section: Section | null; o
     if (!section) return null;
 
     const attach = (productId: number) => {
-        router.post(`/admin/home-sections/${section.id}/products`, { product_id: productId }, { preserveScroll: true, preserveState: true });
+        router.post(`/admin/home-sections/${section.id}/products`, { product_id: productId }, { preserveScroll: true, preserveState: true, onSuccess: () => toast.success('Product added to section.') });
     };
 
     const detach = (productId: number) => {
-        router.delete(`/admin/home-sections/${section.id}/products/${productId}`, { preserveScroll: true, preserveState: true });
+        router.delete(`/admin/home-sections/${section.id}/products/${productId}`, { preserveScroll: true, preserveState: true, onSuccess: () => toast.success('Product removed from section.') });
     };
 
     const move = (index: number, dir: -1 | 1) => {

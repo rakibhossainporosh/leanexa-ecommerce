@@ -1,4 +1,5 @@
 import { Head, useForm, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,7 @@ export default function CurrenciesIndex({ currencies }: { currencies: any[] }) {
         
         const onSuccess = () => {
             setIsOpen(false);
+            toast.success(editingCurrency ? 'Currency updated successfully.' : 'Currency created successfully.');
             setEditingCurrency(null);
             reset();
             clearErrors();
@@ -61,7 +63,7 @@ export default function CurrenciesIndex({ currencies }: { currencies: any[] }) {
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this currency?')) {
-            router.delete(`/admin/currencies/${id}`);
+            router.delete(`/admin/currencies/${id}`, { onSuccess: () => toast.success('Currency deleted successfully.') });
         }
     };
 

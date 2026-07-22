@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -18,7 +19,7 @@ const STATUS_BADGE: Record<string, string> = {
 export default function CustomerShow({ customer, stats }: { customer: any; stats: any }) {
     const handleDelete = () => {
         if (confirm(`Delete ${customer.name}?\n\nThis also permanently deletes ALL of their orders (and removes that revenue from the Sales Report), along with their cart and wishlist. This cannot be undone.`)) {
-            router.delete(`/admin/customers/${customer.id}`);
+            router.delete(`/admin/customers/${customer.id}`, { onSuccess: () => toast.success('Customer deleted successfully.') });
         }
     };
 

@@ -1,4 +1,5 @@
 import { Head, useForm, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AdminLayout from '@/layouts/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,7 @@ export default function MediaIndex({ media, stats }: { media: MediaItem[]; stats
             onSuccess: () => {
                 reset('files');
                 if (fileInputRef.current) fileInputRef.current.value = '';
+                toast.success('Uploaded successfully.');
             },
         });
     };
@@ -62,7 +64,7 @@ export default function MediaIndex({ media, stats }: { media: MediaItem[]; stats
 
     const remove = (item: MediaItem) => {
         if (confirm(`Delete "${item.name}"? This cannot be undone.`)) {
-            router.delete(`/admin/media/${item.id}`, { preserveScroll: true });
+            router.delete(`/admin/media/${item.id}`, { preserveScroll: true, onSuccess: () => toast.success('File deleted.') });
         }
     };
 
