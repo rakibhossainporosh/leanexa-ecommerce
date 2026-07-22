@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useState } from 'react';
 import { useCurrency } from '@/hooks/use-currency';
-import { DollarSign, ShoppingBag, FileText, Search } from 'lucide-react';
+import { ShoppingBag, FileText, Search } from 'lucide-react';
 
 export default function SalesReportIndex({ summary, recent_transactions, filters }: { summary: any; recent_transactions: any[]; filters: any }) {
     // The controller reports every figure in the default currency, so formatPrice
@@ -61,7 +61,6 @@ export default function SalesReportIndex({ summary, recent_transactions, filters
                 <Card className="bg-primary text-primary-foreground">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium opacity-90">Total Revenue</CardTitle>
-                        <DollarSign className="h-5 w-5 opacity-80" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold">{formatPrice(summary.total_revenue)}</div>
@@ -76,7 +75,7 @@ export default function SalesReportIndex({ summary, recent_transactions, filters
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold">{summary.total_orders}</div>
-                        <p className="text-muted-foreground mt-1 text-xs">Completed e-commerce orders</p>
+                        <p className="text-muted-foreground mt-1 text-xs">Paid e-commerce orders</p>
                     </CardContent>
                 </Card>
 

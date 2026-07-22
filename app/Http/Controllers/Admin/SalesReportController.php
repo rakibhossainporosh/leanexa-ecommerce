@@ -12,67 +12,78 @@ use Carbon\Carbon;
 class SalesReportController extends Controller
 {
     /**
-     * Legacy invoices predate the currency columns and carry rate 1 (or null),
-     * so COALESCE/NULLIF keeps them at face value instead of dividing by zero.
+     * Revenue = money actually received (amount_paid), so partially-paid invoices
+     * count for the part that was paid. Legacy invoices predate the currency
+     * columns and carry rate 1 (or null), so COALESCE/NULLIF keeps them at face
+     * value instead of dividing by zero.
      */
     private const INVOICE_REVENUE_IN_DEFAULT_CURRENCY =
-        'COALESCE(SUM(amount / COALESCE(NULLIF(exchange_rate, 0), 1)), 0) AS total';
+        'COALESCE(SUM(amount_paid / COALESCE(NULLIF(exchange_rate, 0), 1)), 0) AS total';
 
     public function index(Request $request)
     {
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $validated = $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+        ]);
 
-        $ordersQuery = Order::query()->where('payment_status', 'paid');
-        $invoicesQuery = CustomInvoice::query()->where('status', 'paid');
+        $startDate = $validated['start_date'] ?? null;
+        $endDate = $validated['end_date'] ?? null;
 
-        if ($startDate && $endDate) {
-            $start = Carbon::parse($startDate)->startOfDay();
-            $end = Carbon::parse($endDate)->endOfDay();
-            
-            $ordersQuery->whereBetween('created_at', [$start, $end]);
-            $invoicesQuery->whereBetween('created_at', [$start, $end]);
-        }
+        // Shared date range applied to every query so the summary cards and the
+        // recent-transactions list always reflect the same period.
+        $range = ($startDate && $endDate)
+            ? [Carbon::parse($startDate)->startOfDay(), Carbon::parse($endDate)->endOfDay()]
+            : null;
+        $withRange = function ($query) use ($range) {
+            if ($range) {
+                $query->whereBetween('created_at', $range);
+            }
+            return $query;
+        };
 
-        $totalOrderRevenue = (float) $ordersQuery->sum('total_amount');
+        // Orders are always stored in the default currency.
+        $totalOrderRevenue = (float) $withRange(Order::where('payment_status', 'paid'))->sum('total_amount');
+        $totalOrdersCount = (int) $withRange(Order::where('payment_status', 'paid'))->count();
 
-        // Orders are always stored in the default currency, but a custom invoice
-        // keeps its own currency and the rate it was issued at. Summing amount
-        // raw would add "1" for a $1 invoice instead of its ~123 BDT, so divide
-        // each one back to the default currency before adding the two together.
-        $totalInvoiceRevenue = (float) $invoicesQuery->clone()
+        // A custom invoice keeps its own currency and the rate it was issued at,
+        // so divide amount_paid back to the default currency before adding.
+        // Both fully- and partially-paid invoices contribute the money received.
+        $totalInvoiceRevenue = (float) $withRange(CustomInvoice::whereIn('status', ['paid', 'partially_paid']))
             ->selectRaw(self::INVOICE_REVENUE_IN_DEFAULT_CURRENCY)
             ->value('total');
 
+        // "Paid Invoices" card counts fully-paid invoices, matching its label.
+        $totalInvoicesCount = (int) $withRange(CustomInvoice::where('status', 'paid'))->count();
+
         $totalRevenue = $totalOrderRevenue + $totalInvoiceRevenue;
 
-        $totalOrdersCount = $ordersQuery->count();
-        $totalInvoicesCount = $invoicesQuery->count();
+        // Recent transactions — same date range as the summary above.
+        $recentOrders = $withRange(Order::with('customer')->where('payment_status', 'paid'))
+            ->latest()->take(5)->get()->map(function($order) {
+                return [
+                    'id' => $order->id,
+                    'identifier' => $order->order_number,
+                    'type' => 'Order',
+                    'customer' => $order->customer?->name ?? 'Guest',
+                    'amount' => $order->total_amount,
+                    'date' => $order->created_at->toISOString(),
+                ];
+            });
 
-        // Get recent transactions (combine latest 5 from both)
-        $recentOrders = Order::with('customer')->where('payment_status', 'paid')->latest()->take(5)->get()->map(function($order) {
-            return [
-                'id' => $order->id,
-                'identifier' => $order->order_number,
-                'type' => 'Order',
-                'customer' => $order->customer?->name ?? 'Guest',
-                'amount' => $order->total_amount,
-                'date' => $order->created_at->toISOString(),
-            ];
-        });
-
-        $recentInvoices = CustomInvoice::where('status', 'paid')->latest()->take(5)->get()->map(function($invoice) {
-            return [
-                'id' => $invoice->id,
-                'identifier' => '#' . str_pad($invoice->id, 5, '0', STR_PAD_LEFT),
-                'type' => 'Custom Invoice',
-                'customer' => $invoice->customer_name,
-                // Normalised like the totals above, so this list never mixes a
-                // raw USD figure in beside BDT order amounts.
-                'amount' => round((float) $invoice->amount / (((float) $invoice->exchange_rate) ?: 1), 2),
-                'date' => $invoice->created_at->toISOString(),
-            ];
-        });
+        $recentInvoices = $withRange(CustomInvoice::whereIn('status', ['paid', 'partially_paid']))
+            ->latest()->take(5)->get()->map(function($invoice) {
+                return [
+                    'id' => $invoice->id,
+                    'identifier' => '#' . str_pad($invoice->id, 5, '0', STR_PAD_LEFT),
+                    'type' => 'Custom Invoice',
+                    'customer' => $invoice->customer_name,
+                    // Money received, normalised to the default currency so this
+                    // list never mixes a raw USD figure beside BDT order amounts.
+                    'amount' => round((float) $invoice->amount_paid / (((float) $invoice->exchange_rate) ?: 1), 2),
+                    'date' => $invoice->created_at->toISOString(),
+                ];
+            });
 
         // Combine and sort by date descending, take top 10
         $recentTransactions = collect($recentOrders)->concat($recentInvoices)->sortByDesc('date')->take(10)->values();

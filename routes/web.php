@@ -184,7 +184,30 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::middleware(['auth:admin'])->group(function () {
             Route::get('dashboard', function () {
-                $totalSales = \App\Models\Order::where('status', 'completed')->orWhere('payment_status', 'paid')->sum('total_amount');
+                // Revenue = orders that are completed OR paid. Grouped so the OR
+                // never leaks past the date filters used for the month comparison.
+                $paid = fn ($q) => $q->where('status', 'completed')->orWhere('payment_status', 'paid');
+
+                $totalSales = \App\Models\Order::where($paid)->sum('total_amount');
+
+                $thisMonthStart = now()->startOfMonth();
+                $lastMonthStart = now()->subMonthNoOverflow()->startOfMonth();
+
+                $thisMonthSales = \App\Models\Order::where($paid)
+                    ->where('created_at', '>=', $thisMonthStart)
+                    ->sum('total_amount');
+                $lastMonthSales = \App\Models\Order::where($paid)
+                    ->where('created_at', '>=', $lastMonthStart)
+                    ->where('created_at', '<', $thisMonthStart)
+                    ->sum('total_amount');
+
+                // Real month-over-month change. When last month had no sales we
+                // can't compute a ratio, so report +100% if there are sales now,
+                // otherwise 0%.
+                $salesChange = $lastMonthSales > 0
+                    ? (int) round((($thisMonthSales - $lastMonthSales) / $lastMonthSales) * 100)
+                    : ($thisMonthSales > 0 ? 100 : 0);
+
                 $pendingOrdersCount = \App\Models\Order::where('status', 'pending')->count();
                 $recentOrders = \App\Models\Order::with('customer')->latest()->take(5)->get();
 
@@ -192,6 +215,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
                     'metrics' => [
                         'totalSales' => $totalSales,
                         'pendingOrders' => $pendingOrdersCount,
+                        'salesChange' => $salesChange,
                     ],
                     'recentOrders' => $recentOrders,
                 ]);
