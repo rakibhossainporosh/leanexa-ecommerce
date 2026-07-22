@@ -66,7 +66,9 @@ export default function WishlistIndex({ wishlistItems }: WishlistIndexProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {wishlistItems.map((product) => {
                             const primaryImage = product.images?.find(img => img.is_primary) || product.images?.[0];
-                            const imageUrl = primaryImage ? `/storage/${primaryImage.image_path}` : 'https://placehold.co/400x400?text=No+Image';
+                            // image_path is stored with its /storage/ prefix already —
+                            // prepending it again produced /storage//storage/... and broke the image.
+                            const imageUrl = primaryImage ? primaryImage.image_path : 'https://placehold.co/400x400?text=No+Image';
 
                             return (
                                 <div key={product.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow group">
