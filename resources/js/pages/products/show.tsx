@@ -290,9 +290,15 @@ export default function ProductShow({ product }: { product: any }) {
                     
                     {/* Details Section */}
                     <div className="flex flex-col">
-                        <div className="mb-2">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
                             {product.category && (
                                 <span className="text-sm text-primary font-medium">{product.category.name}</span>
+                            )}
+                            {product.category && product.brand && (
+                                <span className="text-muted-foreground text-sm">·</span>
+                            )}
+                            {product.brand && (
+                                <span className="text-sm text-muted-foreground font-medium">{product.brand.name}</span>
                             )}
                         </div>
                         <h1 className="font-heading text-3xl sm:text-4xl font-bold tracking-tight mb-2">{product.name}</h1>
