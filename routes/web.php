@@ -45,6 +45,21 @@ Route::get('/sync-favicon', function () {
     return 'No custom favicon found in settings.';
 });
 
+// ============================================================================
+// TEMPORARY one-time fresh-install trigger for handover. Wipes the ENTIRE
+// database and re-seeds only the admin account. Protected by a long random
+// token. DELETE THIS ROUTE immediately after it has been used once.
+// ============================================================================
+Route::get('/setup-fresh/d04ae3d575840676385693f83557b587da3e1187f21eebdc', function () {
+    \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
+    \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+
+    return response(
+        'Fresh install complete. Admin login: admin@example.com / password. '
+        . 'NOW: (1) change the admin password, (2) add currencies, (3) remove this route.'
+    );
+});
+
 // Customer Routes
 Route::get('/about', function () {
     $pages = \App\Models\Setting::pages();
