@@ -15,11 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Only the essentials for a clean client install: the roles the admin
+        // account needs, and the admin user itself. Demo content seeders
+        // (products, home sections, currencies/banners, test customer) are
+        // intentionally not called — the client sets those up from the panel.
         $this->call([
             RolesAndPermissionsSeeder::class,
-            HomeSectionsSeeder::class,
-            ShopSeeder::class,
-            ProductSeeder::class,
         ]);
 
         $admin = User::factory()->create([
@@ -27,11 +28,5 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@example.com',
         ]);
         $admin->assignRole('Admin');
-
-        \App\Models\Customer::create([
-            'name' => 'Test Customer',
-            'email' => 'test@example.com',
-            'password' => \Illuminate\Support\Facades\Hash::make('password'),
-        ]);
     }
 }
