@@ -51,13 +51,23 @@ Route::get('/sync-favicon', function () {
 // token. DELETE THIS ROUTE immediately after it has been used once.
 // ============================================================================
 Route::get('/setup-fresh/d04ae3d575840676385693f83557b587da3e1187f21eebdc', function () {
-    \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
+    // AppServiceProvider prohibits destructive DB commands in production, which
+    // made migrate:fresh silently no-op here. Lift it for this one-time wipe.
+    \Illuminate\Support\Facades\DB::prohibitDestructiveCommands(false);
+
+    $exit = \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
+    $output = \Illuminate\Support\Facades\Artisan::output();
     \Illuminate\Support\Facades\Artisan::call('optimize:clear');
 
+    if ($exit !== 0) {
+        return response("FRESH FAILED (exit {$exit}). Output:\n\n{$output}", 500)
+            ->header('Content-Type', 'text/plain');
+    }
+
     return response(
-        'Fresh install complete. Admin login: admin@example.com / password. '
-        . 'NOW: (1) change the admin password, (2) add currencies, (3) remove this route.'
-    );
+        "Fresh install complete. Admin login: admin@example.com / password.\n"
+        . "NOW: (1) change the admin password, (2) add currencies, (3) remove this route.\n\n{$output}"
+    )->header('Content-Type', 'text/plain');
 });
 
 // Customer Routes

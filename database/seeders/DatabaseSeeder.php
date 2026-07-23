@@ -23,10 +23,14 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
         ]);
 
-        $admin = User::factory()->create([
+        // Created without a factory: factories need Faker, which is a dev-only
+        // dependency and is not installed on the production server (--no-dev).
+        $admin = User::create([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
         ]);
+        $admin->forceFill(['email_verified_at' => now()])->save();
         $admin->assignRole('Admin');
     }
 }
