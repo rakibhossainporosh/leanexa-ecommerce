@@ -142,12 +142,12 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                 `}} />
             )}
             {/* ---------- Utility top bar ---------- */}
-            <div className="hidden border-b border-border/60 bg-white/60 text-xs text-muted-foreground backdrop-blur dark:bg-white/5 md:block">
-                <div className="container mx-auto flex h-9 items-center justify-between px-4 lg:px-8">
-                    <div className="flex items-center gap-5">
+            <div className="border-b border-border/60 bg-white/60 text-xs text-muted-foreground backdrop-blur dark:bg-white/5">
+                <div className="container mx-auto flex h-9 items-center justify-between gap-2 px-4 lg:px-8">
+                    <div className="flex min-w-0 items-center gap-3 sm:gap-5">
                         {general_settings?.store_phone && (
-                            <span className="flex items-center gap-1.5">
-                                <Phone className="h-3.5 w-3.5 text-shop" /> {general_settings.store_phone}
+                            <span className="flex min-w-0 items-center gap-1.5">
+                                <Phone className="h-3.5 w-3.5 shrink-0 text-shop" /> <span className="truncate">{general_settings.store_phone}</span>
                             </span>
                         )}
                         {(general_settings?.facebook_link || general_settings?.youtube_link || general_settings?.instagram_link) && (
